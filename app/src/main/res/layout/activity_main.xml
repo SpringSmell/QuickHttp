@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/black"
+
+        tools:context=".MainActivity">
+    <LinearLayout android:layout_width="match_parent"
+                  android:layout_height="match_parent"
+                  android:orientation="vertical"
+                  android:layout_marginTop="50dp">
+
+        <TextView
+                android:id="@+id/tv0"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:textColor="#fff"
+                android:gravity="center"
+                android:textSize="20sp"
+                android:text="请求网络"
+                android:background="?attr/selectableItemBackground"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="parent"/>
+        <View android:layout_width="match_parent" android:layout_height="1px"
+              android:background="#fff"/>
+        <TextView
+                android:id="@+id/tv1"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:textColor="#fff"
+                android:gravity="center"
+                android:textSize="20sp"
+                android:text="下载文件"
+                android:background="?attr/selectableItemBackground"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="parent"/>
+        <View android:layout_width="match_parent" android:layout_height="1px"
+              android:background="#fff"/>
+        <TextView
+                android:id="@+id/tv2"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:textColor="#fff"
+                android:gravity="center"
+                android:textSize="20sp"
+                android:background="?attr/selectableItemBackground"
+                android:text="上传文件"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="parent"/>
+        <View android:layout_width="match_parent" android:layout_height="1px"
+              android:background="#fff"/>
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
