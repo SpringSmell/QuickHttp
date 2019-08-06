@@ -4,7 +4,6 @@ import android.app.Activity
 import android.os.*
 import android.text.TextUtils
 import android.util.Log
-import com.google.gson.Gson
 import com.squareup.moshi.Moshi
 import org.quick.http.callback.OnWriteListener
 import java.io.File
@@ -21,7 +20,6 @@ object Utils {
     val mainHandler: Handler by lazy { return@lazy Handler(Looper.getMainLooper()) }
     private val executorService = Executors.newFixedThreadPool(50)
 
-    val gson = Gson()
     val moshi = Moshi.Builder().build()
 
     inline fun <reified T> parseFromJson(json: String?): T? = try {
