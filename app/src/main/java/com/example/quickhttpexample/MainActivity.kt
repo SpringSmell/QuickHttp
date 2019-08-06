@@ -31,7 +31,7 @@ class MainActivity : AppCompatActivity() {
             .baseUrl("https://www.baseurl.com")/*默认为空*/
             .addParams("TOKEN", "")/*公共参数*/
             .method(true)/*默认为GET请求*/
-            .addHeader("","")/*公共头部参数*/
+            .addHeader("key","value")/*公共头部参数*/
             .connectTimeout(200000)/*超时时间*/
             .encoding("UTF-8")/*编码*/
             .retryConnection(true)/*连接异常是否重试*/
