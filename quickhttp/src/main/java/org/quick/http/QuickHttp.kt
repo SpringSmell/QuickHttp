@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.text.TextUtils
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import org.quick.http.Utils.mediaTypeFile
 import org.quick.http.callback.OnDownloadListener
 import org.quick.http.callback.OnRequestStatusCallback
 import org.quick.http.callback.OnUploadingListener
@@ -22,20 +23,7 @@ import java.util.concurrent.TimeUnit
  * 使用okHttp
  */
 object QuickHttp {
-    /**
-     * json类型
-     */
-    val mediaTypeJson: MediaType?
-        get() {
-            return ("application/json; charset=" + Config.encoding).toMediaTypeOrNull()
-        }
-    /**
-     * File类型
-     */
-    val mediaTypeFile: MediaType?
-        get() {
-            return ("application/octet-stream; charset=" + Config.encoding).toMediaTypeOrNull()
-        }
+
 
     private val taskCalls = HashMap<String, Call>()
     /**
@@ -222,7 +210,7 @@ object QuickHttp {
      * 兼容java
      * 返回json使用GSON解析，若 T = String 则不进行解析
      */
-    fun <T> getWithJava(builder: Builder, callback: org.quick.http.callback.Callback<T>) {
+    private fun <T> getWithJava(builder: Builder, callback: org.quick.http.callback.Callback<T>) {
         val request = getRequest(builder).build()
 
         callback.onStart()
@@ -257,7 +245,7 @@ object QuickHttp {
      * 兼容java
      * 返回值json使用GSON解析，若 T = String 则不进行解析
      */
-    fun <T> postWithJava(builder: Builder, callback: org.quick.http.callback.Callback<T>) {
+    private fun <T> postWithJava(builder: Builder, callback: org.quick.http.callback.Callback<T>) {
         val request = postRequest(builder).build()
 
         callback.onStart()
@@ -296,7 +284,7 @@ object QuickHttp {
      * 兼容java
      * 上传文件
      */
-    fun <T> uploadingWithJava(builder: Builder, onUploadingListener: OnUploadingListener<T>) {
+    private  fun <T> uploadingWithJava(builder: Builder, onUploadingListener: OnUploadingListener<T>) {
         val multipartBody = MultipartBody.Builder().setType(MultipartBody.MIXED)
         builder.requestBodyBundle.keySet().forEach {
             multipartBody.addFormDataPart(it, builder.requestBodyBundle.get(it).toString())
@@ -318,7 +306,7 @@ object QuickHttp {
                             multipartBody.addFormDataPart(
                                 it,
                                 file.name,
-                                UploadingRequestBody(mediaTypeFile!!, it, file, onUploadingListener)
+                                UploadingRequestBody(Utils.mediaTypeFile!!, it, file, onUploadingListener)
                             )
                     }
                 }
@@ -357,7 +345,7 @@ object QuickHttp {
     /**
      * 使用GET方式下载文件
      */
-    fun downloadGet(builder: Builder, onDownloadListener: OnDownloadListener) {
+    private fun downloadGet(builder: Builder, onDownloadListener: OnDownloadListener) {
         val request = getRequest(builder).build()
 
         onDownloadListener.onStart()
@@ -416,7 +404,7 @@ object QuickHttp {
     /**
      * 使用POST方式下载文件
      */
-    fun downloadPost(builder: Builder, onDownloadListener: OnDownloadListener) {
+    private fun downloadPost(builder: Builder, onDownloadListener: OnDownloadListener) {
         if (!builder.isDownloadBreakpoint)/*非断点，未调用onStart方法*/
             onDownloadListener.onStart()
         val request = postRequest(builder).build()
@@ -475,7 +463,7 @@ object QuickHttp {
     /**
      * 获取本地文件的总长度
      */
-    fun getLocalDownloadLength(builder: Builder): Long {
+    private fun getLocalDownloadLength(builder: Builder): Long {
         val file = File(Config.cachePath + File.separatorChar + Utils.getFileName(configUrl(builder.url)))
         return if (file.exists()) file.length() else 0
     }
@@ -483,7 +471,7 @@ object QuickHttp {
     /**
      * 断点下载文件
      */
-    fun downloadBreakpoint(builder: Builder, onDownloadListener: OnDownloadListener) {
+    private fun downloadBreakpoint(builder: Builder, onDownloadListener: OnDownloadListener) {
         onDownloadListener.onStart()
         if (builder.downloadEndIndex == 0L)/*没有指定下载结束*/
             downloadClient.build().newCall(postRequest(builder).build()).enqueue(object : Callback {
@@ -519,7 +507,7 @@ object QuickHttp {
     /**
      * 取消指定正在运行的任务
      */
-    fun cancelTask(tag: String?) {
+    private fun cancelTask(tag: String?) {
         if (TextUtils.isEmpty(tag)) return
         for (call in taskCalls) {
             if (tag == call.value.request().tag() && !call.value.isCanceled()) {
@@ -533,7 +521,7 @@ object QuickHttp {
     /**
      * 取消指定正在运行的任务
      */
-    fun cancelTask(activity: Activity?) {
+    private fun cancelTask(activity: Activity?) {
         if (activity != null)
             for (call in taskCalls) {
                 if (call.key.startsWith(activity.javaClass.canonicalName)) {
@@ -828,6 +816,49 @@ object QuickHttp {
 
         fun setOnRequestStatusCallback(onRequestCallback: OnRequestStatusCallback) {
             this.onRequestCallback = onRequestCallback
+        }
+    }
+
+    internal class QuickHttpProxy(var builder: Builder) : org.quick.http.callback.Call {
+
+        /**
+         * 异步执行
+         */
+        override fun <T> enqueue(callback: org.quick.http.callback.Callback<T>) {
+            when (callback) {
+                is OnDownloadListener -> {/*下载*/
+                    if (builder.isDownloadBreakpoint) {
+                        if (builder.downloadStartIndex == 0L)
+                            builder.downloadStartIndex = getLocalDownloadLength(builder)
+
+                        downloadBreakpoint(builder, callback)/*断点下载*/
+                    } else
+                        downloadGet(builder, callback)
+                }
+
+                is OnUploadingListener -> {/*上传*/
+                    uploadingWithJava(builder, callback)
+                }
+
+                else -> {/*普通请求*/
+                    if (builder.method == "GET")
+                        getWithJava(builder, callback)
+                    else
+                        postWithJava(builder, callback)
+                }
+            }
+        }
+
+        override fun cancel() {
+            cancelTask(builder().tag)
+        }
+
+        override fun builder(): Builder {
+            return builder
+        }
+
+        fun build(): org.quick.http.callback.Call {
+            return this
         }
     }
 }

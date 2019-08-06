@@ -5,6 +5,8 @@ import android.os.*
 import android.text.TextUtils
 import android.util.Log
 import com.squareup.moshi.Moshi
+import okhttp3.MediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import org.quick.http.callback.OnWriteListener
 import java.io.File
 import java.io.FileOutputStream
@@ -21,6 +23,20 @@ object Utils {
     private val executorService = Executors.newFixedThreadPool(50)
 
     val moshi = Moshi.Builder().build()
+    /**
+     * json类型
+     */
+    val mediaTypeJson: MediaType?
+        get() {
+            return ("application/json; charset=" + QuickHttp.Config.encoding).toMediaTypeOrNull()
+        }
+    /**
+     * File类型
+     */
+    val mediaTypeFile: MediaType?
+        get() {
+            return ("application/octet-stream; charset=" + QuickHttp.Config.encoding).toMediaTypeOrNull()
+        }
 
     inline fun <reified T> parseFromJson(json: String?): T? = try {
         val jsonAdapter = moshi.adapter<T>(T::class.java)

@@ -6,7 +6,15 @@ apply plugin: 'kotlin-android-extensions'
 
 apply plugin: 'com.github.dcendents.android-maven'
 
+repositories {
+    mavenCentral()
+    google()
+    jcenter()
+    maven { url "https://jitpack.io" }
+}
+
 group='org.quick.android'
+version = '1.0.0'
 
 android {
     compileSdkVersion 28

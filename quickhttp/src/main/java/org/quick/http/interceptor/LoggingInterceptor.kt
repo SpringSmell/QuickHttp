@@ -3,6 +3,7 @@ package org.quick.http.interceptor
 import android.util.Log
 import okhttp3.*
 import org.quick.http.QuickHttp
+import org.quick.http.Utils
 
 /**
  * 全局拦截器
@@ -32,7 +33,7 @@ class LoggingInterceptor : Interceptor {
         Log.d("QuickHttp"," ")
 
         return response.newBuilder()
-                .body(ResponseBody.create(QuickHttp.mediaTypeJson, resultStr))
+                .body(ResponseBody.create(Utils.mediaTypeJson, resultStr))
                 .build()
     }
 
