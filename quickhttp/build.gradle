@@ -4,10 +4,9 @@ apply plugin: 'kotlin-android'
 
 apply plugin: 'kotlin-android-extensions'
 
-// JitPack Maven
 apply plugin: 'com.github.dcendents.android-maven'
-// Your Group
-group='org.quick.http'
+
+group='org.quick.android'
 
 android {
     compileSdkVersion 28
