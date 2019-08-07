@@ -1,3 +1,5 @@
+@file:Suppress("RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS", "UNCHECKED_CAST")
+
 package org.quick.http
 
 import android.app.Activity
@@ -21,6 +23,7 @@ import java.util.concurrent.TimeUnit
 /**
  * 网络服务
  * 使用okHttp
+ * @from https://github.com/SpringSmell/QuickHttp
  */
 object QuickHttp {
 
@@ -524,7 +527,7 @@ object QuickHttp {
     private fun cancelTask(activity: Activity?) {
         if (activity != null)
             for (call in taskCalls) {
-                if (call.key.startsWith(activity.javaClass.canonicalName)) {
+                if (call.key.startsWith(activity.javaClass.canonicalName!!)) {
                     if (!call.value.isCanceled()) call.value.cancel()
                 }
             }
@@ -819,7 +822,7 @@ object QuickHttp {
         }
     }
 
-    internal class QuickHttpProxy(var builder: Builder) : org.quick.http.callback.Call {
+    internal class QuickHttpProxy(private var builder: Builder) : org.quick.http.callback.Call {
 
         /**
          * 异步执行
