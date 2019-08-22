@@ -19,7 +19,7 @@ object Utils {
     val saveSDCardPath = Environment.getExternalStorageDirectory().absolutePath + File.separator + "QuickAndroid"
     const val MAX_SKIP_BUFFER_SIZE = 2048/*最大缓冲区大小*/
 
-    val mainHandler: Handler by lazy { return@lazy Handler(Looper.getMainLooper()) }
+    private val mainHandler: Handler by lazy { return@lazy Handler(Looper.getMainLooper()) }
     private val executorService = Executors.newFixedThreadPool(50)
 
     val moshi = Moshi.Builder().build()
@@ -28,14 +28,14 @@ object Utils {
      */
     val mediaTypeJson: MediaType?
         get() {
-            return ("application/json; charset=" + QuickHttp.Config.encoding).toMediaTypeOrNull()
+            return ("application/json; charset=" + HttpService.Config.encoding).toMediaTypeOrNull()
         }
     /**
      * File类型
      */
     val mediaTypeFile: MediaType?
         get() {
-            return ("application/octet-stream; charset=" + QuickHttp.Config.encoding).toMediaTypeOrNull()
+            return ("application/octet-stream; charset=" + HttpService.Config.encoding).toMediaTypeOrNull()
         }
 
     inline fun <reified T> parseFromJson(json: String?): T? = try {

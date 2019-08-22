@@ -8,12 +8,11 @@ import org.quick.http.callback.OnProgressCallback
 /**
  * 下载进度监听-响应体
  */
-class ProgressResponseBody(var builder: QuickHttp.Builder, var responseBody: ResponseBody, var onProgressCallback: OnProgressCallback) : ResponseBody() {
+class ProgressResponseBody(var builder: HttpService.Builder, var responseBody: ResponseBody, var onProgressCallback: OnProgressCallback) : ResponseBody() {
 
     var bufferedSource: BufferedSource
 
     init {
-//        bufferedSource = Okio.buffer(source(responseBody.source()))
         bufferedSource = source(responseBody.source()).buffer()
     }
 
