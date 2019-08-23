@@ -455,7 +455,7 @@ object HttpService {
     /**
      * 取消指定正在运行的任务
      */
-    private fun cancelTask(tag: String?) {
+    fun cancelTask(tag: String?) {
         if (TextUtils.isEmpty(tag)) return
         for (call in taskCalls) {
             if (tag == call.value.request().tag() && !call.value.isCanceled()) {
@@ -469,7 +469,7 @@ object HttpService {
     /**
      * 取消指定正在运行的任务
      */
-    private fun cancelTask(activity: Activity?) {
+    fun cancelTask(activity: Activity?) {
         if (activity != null)
             for (call in taskCalls) {
                 if (call.key.startsWith(activity.javaClass.canonicalName!!)) {
