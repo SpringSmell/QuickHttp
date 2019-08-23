@@ -19,9 +19,8 @@ version = '1.0.0'
 android {
     compileSdkVersion 28
 
-
     defaultConfig {
-        minSdkVersion 14
+        minSdkVersion 15
         targetSdkVersion 28
         versionCode 1
         versionName "1.0"
@@ -33,7 +32,6 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
-
 }
 
 dependencies {
@@ -41,6 +39,7 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.0.2'
     implementation 'com.squareup.moshi:moshi:1.8.0'
     implementation 'com.squareup.okhttp3:okhttp:4.0.1'
+    implementation 'com.github.SpringSmell:QuickAsync:1.0.1'
 }
 
 //apply from: "publish.gradle"

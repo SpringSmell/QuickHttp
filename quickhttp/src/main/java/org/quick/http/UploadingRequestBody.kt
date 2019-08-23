@@ -6,6 +6,7 @@ import okio.Buffer
 import okio.BufferedSink
 import okio.Okio
 import okio.source
+import org.quick.async.Async
 import org.quick.http.callback.OnUploadingListener
 import java.io.File
 
@@ -41,11 +42,11 @@ class UploadingRequestBody(var mediaType: MediaType, var key: String, var file: 
 
                 if (!isDone) {/*完成后只触发一次*/
                     isDone = redBytesCount == -1L
-                    Utils.runOnUiThread { onUploadingListener?.onLoading(key, redBytesTotalCount, contentLength(), isDone) }
+                    Async.runOnUiThread { onUploadingListener?.onLoading(key, redBytesTotalCount, contentLength(), isDone) }
                 }
             }
         }
-        if (!isDone) Utils.runOnUiThread { onUploadingListener?.onLoading(key, redBytesTotalCount, contentLength(), true) }
+        if (!isDone) Async.runOnUiThread { onUploadingListener?.onLoading(key, redBytesTotalCount, contentLength(), true) }
     }
 
 }

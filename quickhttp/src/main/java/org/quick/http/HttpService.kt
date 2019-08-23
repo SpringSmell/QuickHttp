@@ -6,7 +6,7 @@ import android.app.Activity
 import android.os.Bundle
 import android.text.TextUtils
 import okhttp3.*
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import org.quick.async.Async
 import org.quick.http.Utils.mediaTypeFile
 import org.quick.http.callback.OnDownloadListener
 import org.quick.http.callback.OnRequestStatusCallback
@@ -212,7 +212,7 @@ object HttpService {
     private fun onFailure(call: Call, e: IOException,builder: Builder, callback: org.quick.http.callback.Callback<*>){
         removeTask(builder, call.request())
         if (checkBinderIsExist(builder)) {
-            Utils.runOnUiThread {
+            Async.runOnUiThread {
                 callback.onFailure(e, e.javaClass == ConnectException::class.java)
                 Config.onRequestCallback?.onFailure(e, e.javaClass == ConnectException::class.java)
                 callback.onEnd()
@@ -236,9 +236,9 @@ object HttpService {
                 removeTask(builder, call.request())
                 val data = checkOOM(response)
                 if (checkBinderIsExist(builder)) {
-                    Utils.runOnUiThread {
+                    Async.runOnUiThread {
                         if (callback.tClass == String::class.java) callback.onResponse(data as T)
-                        else callback.onResponse(Utils.parseFromJson(data, callback.tClass))
+                        else callback.onResponse(JsonUtils.parseFromJson(data, callback.tClass))
                         callback.onEnd()
                     }
                 }
@@ -264,10 +264,10 @@ object HttpService {
                 removeTask(builder, call.request())
                 val data = checkOOM(response)
                 if (checkBinderIsExist(builder)) {
-                    Utils.runOnUiThread {
+                    Async.runOnUiThread {
                         if (callback.tClass == String::class.java) callback.onResponse(data as T)
                         else {
-                            val model = Utils.parseFromJson(data, callback.tClass)
+                            val model = JsonUtils.parseFromJson(data, callback.tClass)
                             if (model == null) Config.onRequestCallback?.onErrorParse(data)
                             callback.onResponse(model)
                         }
@@ -323,9 +323,9 @@ object HttpService {
                 removeTask(builder, call.request())
                 val data = checkOOM(response)
                 if (checkBinderIsExist(builder)) {
-                    Utils.runOnUiThread {
+                    Async.runOnUiThread {
                         if (onUploadingListener.tClass == String::class.java) onUploadingListener.onResponse(data as T)
-                        else onUploadingListener.onResponse(Utils.parseFromJson(data, onUploadingListener.tClass))
+                        else onUploadingListener.onResponse(JsonUtils.parseFromJson(data, onUploadingListener.tClass))
                         onUploadingListener.onEnd()
                     }
                 }
@@ -435,7 +435,7 @@ object HttpService {
                     builder.downloadEndIndex = response.body!!.contentLength()
                     response.body?.close()
                     if (builder.downloadEndIndex == builder.downloadStartIndex) {/*本地与线上一致*/
-                        Utils.runOnUiThread {
+                        Async.runOnUiThread {
                             onDownloadListener.onResponse(
                                 File(
                                     Config.cachePath + File.separatorChar + Utils.getFileName(

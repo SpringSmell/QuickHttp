@@ -3,6 +3,7 @@ package org.quick.http
 import okhttp3.MediaType
 import okhttp3.ResponseBody
 import okio.*
+import org.quick.async.Async
 import org.quick.http.callback.OnProgressCallback
 
 /**
@@ -32,7 +33,7 @@ class ProgressResponseBody(var builder: HttpService.Builder, var responseBody: R
             override fun read(sink: Buffer, byteCount: Long): Long {
                 val bytesRead = super.read(sink, byteCount)
                 totalBytesRead += if (bytesRead != -1L) bytesRead else 0
-                Utils.runOnUiThread {
+                Async.runOnUiThread {
                     onProgressCallback.onLoading(Utils.getFileName(builder.url), totalBytesRead, contentLength(), bytesRead == -1L)
                 }
                 return bytesRead

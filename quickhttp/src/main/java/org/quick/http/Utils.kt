@@ -7,6 +7,7 @@ import android.util.Log
 import com.squareup.moshi.Moshi
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import org.quick.async.Async
 import org.quick.http.callback.OnWriteListener
 import java.io.File
 import java.io.FileOutputStream
@@ -19,10 +20,6 @@ object Utils {
     val saveSDCardPath = Environment.getExternalStorageDirectory().absolutePath + File.separator + "QuickAndroid"
     const val MAX_SKIP_BUFFER_SIZE = 2048/*最大缓冲区大小*/
 
-    private val mainHandler: Handler by lazy { return@lazy Handler(Looper.getMainLooper()) }
-    private val executorService = Executors.newFixedThreadPool(50)
-
-    val moshi = Moshi.Builder().build()
     /**
      * json类型
      */
@@ -38,46 +35,6 @@ object Utils {
             return ("application/octet-stream; charset=" + HttpService.Config.encoding).toMediaTypeOrNull()
         }
 
-    inline fun <reified T> parseFromJson(json: String?): T? = try {
-        val jsonAdapter = moshi.adapter<T>(T::class.java)
-        jsonAdapter.fromJson(json)
-    } catch (O_O: Exception) {
-        Log.e("Gson", "json or class error , from  " + T::class.java.simpleName + " error json :" + json)
-        null
-    }
-
-    /**
-     * 将json解析成java对象
-     *
-     * @param json
-     * @param cls
-     * @return
-     */
-    fun <T> parseFromJson(json: String?, cls: Class<T>): T? = try {
-        val jsonAdapter = moshi.adapter<T>(cls)
-        jsonAdapter.fromJson(json)
-    } catch (ex: Exception) {
-        ex.printStackTrace()
-        Log.e("Gson", "json or class error , from  " + cls.simpleName + " error json :" + json)
-        null
-    }
-
-
-    fun runOnUiThread(onListener: () -> Unit) {
-        mainHandler.post { onListener.invoke() }
-    }
-
-    /**
-     * 异常线程处理数据，然后返回值
-     */
-    fun <T> async(onASyncListener: OnASyncListener<T>) = executorService.submit {
-        try {
-            val value = onASyncListener.onASync()
-            runOnUiThread { onASyncListener.onAccept(value) }
-        } catch (O_O: Exception) {
-            runOnUiThread { onASyncListener.onError(O_O) }
-        }
-    }
 
     fun getFileName(url: String): String {
         var fileName = System.currentTimeMillis().toString()
@@ -150,7 +107,7 @@ object Utils {
     ) {
         if (inputStream != null) {
 
-            async(object : OnASyncListener<File> {
+            Async.action(object : Async.OnASyncListener<File> {
                 override fun onASync(): File {
                     val dir = File(filePathDir)
                     if (!dir.exists())
@@ -178,7 +135,7 @@ object Utils {
                         if (tempTime > 100L) {/*间隔80毫秒触发一次，否则队列阻塞*/
                             if (!isDone) {/*完成后只触发一次*/
                                 isDone = redBytesCount == -1
-                                runOnUiThread {
+                                Async.runOnUiThread {
                                     onWriteListener.onLoading(
                                         fileName,
                                         redCount,
@@ -190,7 +147,7 @@ object Utils {
                             lastTime = System.currentTimeMillis()
                         }
                     }
-                    if (!isDone) runOnUiThread {
+                    if (!isDone) Async.runOnUiThread {
                         onWriteListener.onLoading(
                             fileName,
                             redCount,
@@ -216,20 +173,5 @@ object Utils {
         } else {
             throw NullPointerException()
         }
-    }
-
-    interface OnASyncListener<T> : Consumer<T> {
-        fun onASync(): T
-        fun onError(O_O: Exception) {}
-    }
-
-    interface Consumer<T> {
-        /**
-         * Consume the given value.
-         * @param value the value
-         * @throws Exception on error
-         */
-        @Throws(Exception::class)
-        fun onAccept(value: T)
     }
 }
