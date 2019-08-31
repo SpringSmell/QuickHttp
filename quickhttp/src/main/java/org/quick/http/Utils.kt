@@ -8,6 +8,7 @@ import com.squareup.moshi.Moshi
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import org.quick.async.Async
+import org.quick.async.callback.OnASyncListener
 import org.quick.http.callback.OnWriteListener
 import java.io.File
 import java.io.FileOutputStream
@@ -107,7 +108,7 @@ object Utils {
     ) {
         if (inputStream != null) {
 
-            Async.action(object : Async.OnASyncListener<File> {
+            Async.action(object : OnASyncListener<File> {
                 override fun onASync(): File {
                     val dir = File(filePathDir)
                     if (!dir.exists())
