@@ -209,7 +209,7 @@ object HttpService {
         else -> true
     }
 
-    private fun onFailure(call: Call, e: IOException,builder: Builder, callback: org.quick.http.callback.Callback<*>){
+    private fun <T> onFailure(call: Call, e: IOException,builder: Builder, callback: org.quick.http.callback.Callback<T>){
         removeTask(builder, call.request())
         if (checkBinderIsExist(builder)) {
             Async.runOnUiThread {
@@ -219,6 +219,23 @@ object HttpService {
             }
         }
     }
+
+    private fun <T> onResponse(call: Call, response: Response,builder: Builder,callback: org.quick.http.callback.Callback<T>){
+        removeTask(builder, call.request())
+        val data = checkOOM(response)
+        if (checkBinderIsExist(builder)) {
+            Async.runOnUiThread {
+                if (callback.tClass == String::class.java) callback.onResponse(data as T)
+                else {
+                    val model = JsonUtils.parseFromJson(data, callback.tClass)
+                    if (model == null) Config.onRequestCallback?.onErrorParse(data)
+                    callback.onResponse(model)
+                }
+                callback.onEnd()
+            }
+        }
+    }
+
     /**
      * 兼容java
      * 返回json使用GSON解析，若 T = String 则不进行解析
@@ -233,15 +250,7 @@ object HttpService {
             }
 
             override fun onResponse(call: Call, response: Response) {
-                removeTask(builder, call.request())
-                val data = checkOOM(response)
-                if (checkBinderIsExist(builder)) {
-                    Async.runOnUiThread {
-                        if (callback.tClass == String::class.java) callback.onResponse(data as T)
-                        else callback.onResponse(JsonUtils.parseFromJson(data, callback.tClass))
-                        callback.onEnd()
-                    }
-                }
+                onResponse(call,response,builder,callback)
             }
         })
 
@@ -261,19 +270,7 @@ object HttpService {
             }
 
             override fun onResponse(call: Call, response: Response) {
-                removeTask(builder, call.request())
-                val data = checkOOM(response)
-                if (checkBinderIsExist(builder)) {
-                    Async.runOnUiThread {
-                        if (callback.tClass == String::class.java) callback.onResponse(data as T)
-                        else {
-                            val model = JsonUtils.parseFromJson(data, callback.tClass)
-                            if (model == null) Config.onRequestCallback?.onErrorParse(data)
-                            callback.onResponse(model)
-                        }
-                        callback.onEnd()
-                    }
-                }
+                onResponse(call,response,builder,callback)
             }
         })
     }
@@ -282,20 +279,19 @@ object HttpService {
      * 兼容java
      * 上传文件
      */
-    private fun <T> uploadingWithJava(builder: Builder, onUploadingListener: OnUploadingListener<T>) {
+    private fun <T> uploadingWithJava(builder: Builder, callback: OnUploadingListener<T>) {
         val multipartBody = MultipartBody.Builder().setType(MultipartBody.MIXED)
         builder.requestBodyBundle.keySet().forEach {
             multipartBody.addFormDataPart(it, builder.requestBodyBundle.get(it).toString())
         }
         builder.fileBundle.keySet().forEach {
-            val obj = builder.fileBundle.getSerializable(it)
-            when (obj) {
+            when (val obj = builder.fileBundle.getSerializable(it)) {
                 is File ->
                     if (obj.exists())
                         multipartBody.addFormDataPart(
                             it,
                             obj.name,
-                            UploadingRequestBody(mediaTypeFile!!, it, obj, onUploadingListener)
+                            UploadingRequestBody(mediaTypeFile!!, it, obj, callback)
                         )
                 is ArrayList<*> -> {
                     obj.forEach { temp ->
@@ -304,7 +300,7 @@ object HttpService {
                             multipartBody.addFormDataPart(
                                 it,
                                 file.name,
-                                UploadingRequestBody(Utils.mediaTypeFile!!, it, file, onUploadingListener)
+                                UploadingRequestBody(Utils.mediaTypeFile!!, it, file, callback)
                             )
                     }
                 }
@@ -313,22 +309,14 @@ object HttpService {
 
         val request = Request.Builder().url(configUrl(builder.url)).tag(builder.tag).post(multipartBody.build()).build()
 
-        onUploadingListener.onStart()
+        callback.onStart()
         getCall(uploadingClient, request, builder).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
-                onFailure(call,e,builder,onUploadingListener)
+                onFailure(call,e,builder,callback)
             }
 
             override fun onResponse(call: Call, response: Response) {
-                removeTask(builder, call.request())
-                val data = checkOOM(response)
-                if (checkBinderIsExist(builder)) {
-                    Async.runOnUiThread {
-                        if (onUploadingListener.tClass == String::class.java) onUploadingListener.onResponse(data as T)
-                        else onUploadingListener.onResponse(JsonUtils.parseFromJson(data, onUploadingListener.tClass))
-                        onUploadingListener.onEnd()
-                    }
-                }
+                onResponse(call,response,builder,callback)
             }
         })
     }
@@ -493,19 +481,19 @@ object HttpService {
     /**
      * 构造器
      */
-    class Builder(val url: String) {
-        val requestBodyBundle = Bundle()
-        val fileBundle = Bundle()
-        val header = Bundle()
+    class Builder(internal val url: String) {
+        internal val requestBodyBundle = Bundle()
+        internal val fileBundle = Bundle()
+        internal val header = Bundle()
 
-        var method: String = Config.defaultMethod
-        var tag: String? = null
-        var downloadStartIndex = 0L
-        var downloadEndIndex = 0L
-        var isDownloadBreakpoint = true/*是否断点下载*/
+        internal var method: String = Config.defaultMethod
+        internal var tag: String? = null
+        internal var downloadStartIndex = 0L
+        internal var downloadEndIndex = 0L
+        internal var isDownloadBreakpoint = true/*是否断点下载*/
 
-        var fragment: androidx.fragment.app.Fragment? = null
-        var activity: Activity? = null
+        internal var fragment: androidx.fragment.app.Fragment? = null
+        internal var activity: Activity? = null
 
         fun get(): Builder {
             this.method = "GET"
@@ -762,7 +750,7 @@ object HttpService {
             return this
         }
 
-        fun setOnRequestStatusCallback(onRequestCallback: OnRequestStatusCallback) {
+        fun onRequestStatus(onRequestCallback: OnRequestStatusCallback) {
             this.onRequestCallback = onRequestCallback
         }
     }

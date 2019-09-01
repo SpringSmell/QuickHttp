@@ -38,7 +38,7 @@ class MainActivity : AppCompatActivity() {
             .connectTimeout(200000)/*超时时间*/
             .encoding("UTF-8")/*编码*/
             .retryConnection(true)/*连接异常是否重试：默认为true*/
-            .setOnRequestStatusCallback(object : OnRequestStatusCallback {
+            .onRequestStatus(object : OnRequestStatusCallback {
                 override fun onFailure(e: Throwable, isNetworkError: Boolean) {
 
                 }
@@ -56,12 +56,12 @@ class MainActivity : AppCompatActivity() {
             /*普通请求*/
             HttpService.Builder("https://www.baidu.com/")
                 .get()
-                .enqueue(object : Callback<String>() {
+                .enqueue(object : Callback<BeanKotlin>() {
                 override fun onFailure(e: Throwable, isNetworkError: Boolean) {
                     e.printStackTrace()
                 }
 
-                override fun onResponse(value: String?) {
+                override fun onResponse(value: BeanKotlin?) {
 
                 }
             })
