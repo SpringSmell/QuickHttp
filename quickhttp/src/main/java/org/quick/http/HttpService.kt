@@ -143,13 +143,22 @@ object HttpService {
      * 构建Get请求，并添加默认参数
      */
     private fun getRequest(builder: Builder): Request.Builder {
-        val url = if (Config.params.size() > 0)
-            Utils.formatGet(
-                configUrl(builder.url),
-                builder.requestBodyBundle
-            ) + '&' + Utils.formatParamsGet(Config.params)
-        else
-            Utils.formatGet(configUrl(builder.url), builder.requestBodyBundle)
+        val url =when {
+            builder.requestBodyBundle.size() > 0 -> {
+                Utils.formatGet(
+                    configUrl(builder.url),
+                    builder.requestBodyBundle
+                ) + '&' + Utils.formatParamsGet(Config.params)
+            }
+            Config.params.size() > 0 -> {
+                Utils.formatGet(
+                    configUrl(builder.url),
+                    Config.params
+                )
+            }
+            else ->
+                Utils.formatGet(configUrl(builder.url), builder.requestBodyBundle)
+        }
 
         val request = Request.Builder().url(url).tag(builder.tag)
         builder.header.keySet().forEach { request.addHeader(it, builder.header.get(it).toString()) }

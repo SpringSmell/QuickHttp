@@ -59,7 +59,7 @@ object Utils {
      */
     fun formatGet(url: String, bundle: Bundle?): String {
         val params = formatParamsGet(bundle)
-        return if (params.isNotEmpty()) String.format("%s?%s", url, params) else url
+        return String.format("%s?%s", url, params)
     }
 
     fun formatParamsGet(bundle: Bundle?): String {

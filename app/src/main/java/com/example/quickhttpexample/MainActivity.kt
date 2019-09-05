@@ -56,6 +56,7 @@ class MainActivity : AppCompatActivity() {
             /*普通请求*/
             HttpService.Builder("https://www.baidu.com/")
                 .get()
+                .addParams("test","test")
                 .enqueue(object : Callback<BeanKotlin>() {
                 override fun onFailure(e: Throwable, isNetworkError: Boolean) {
                     e.printStackTrace()
