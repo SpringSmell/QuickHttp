@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+    <TextView
+        android:id="@+id/action"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:background="?attr/selectableItemBackground"
+        android:gravity="center"
+        android:text="在Activity中请求网络"
+        android:textColor="#fff"
+        android:textSize="20sp" />
+    <fragment
+        android:id="@+id/testFragment"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        class="com.example.quickhttpexample.TestFragment"
+        android:layout_weight="1" />
+</LinearLayout>

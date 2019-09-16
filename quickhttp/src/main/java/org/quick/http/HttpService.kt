@@ -143,7 +143,7 @@ object HttpService {
      * 构建Get请求，并添加默认参数
      */
     private fun getRequest(builder: Builder): Request.Builder {
-        val url =when {
+        val url = when {
             builder.requestBodyBundle.size() > 0 -> {
                 Utils.formatGet(
                     configUrl(builder.url),
@@ -176,7 +176,8 @@ object HttpService {
      * 构建Post请求，并添加默认参数
      */
     private fun postRequest(builder: Builder): Request.Builder {
-        val request = Request.Builder().url(configUrl(builder.url)).tag(builder.tag).post(getRequestBody(builder))
+        val request = Request.Builder().url(configUrl(builder.url)).tag(builder.tag)
+            .post(getRequestBody(builder))
         builder.header.keySet().forEach { request.addHeader(it, builder.header.get(it).toString()) }
         Config.header.keySet().forEach { request.addHeader(it, Config.header.get(it).toString()) }
 
@@ -213,12 +214,22 @@ object HttpService {
      * 绑定者是否生存
      */
     private fun checkBinderIsExist(builder: Builder): Boolean = when {
-        builder.activity != null -> Utils.checkActivityIsRunning(builder.activity)
-        builder.fragment != null -> !builder.fragment!!.isDetached
+        builder.activity != null ->
+            Utils.checkActivityIsRunning(builder.activity)
+        builder.fragment != null ->
+            /*所依赖的Activity还在运行中*/
+            (builder.fragment!!.activity != null && Utils.checkActivityIsRunning(builder.fragment!!.activity))
+                    &&
+                    (builder.fragment!!.isAdded && !builder.fragment!!.isDetached)/*已经添加到Activity中，并且没有被分离出来*/
         else -> true
     }
 
-    private fun <T> onFailure(call: Call, e: IOException,builder: Builder, callback: org.quick.http.callback.Callback<T>){
+    private fun <T> onFailure(
+        call: Call,
+        e: IOException,
+        builder: Builder,
+        callback: org.quick.http.callback.Callback<T>
+    ) {
         removeTask(builder, call.request())
         if (checkBinderIsExist(builder)) {
             Async.runOnUiThread {
@@ -229,7 +240,12 @@ object HttpService {
         }
     }
 
-    private fun <T> onResponse(call: Call, response: Response,builder: Builder,callback: org.quick.http.callback.Callback<T>){
+    private fun <T> onResponse(
+        call: Call,
+        response: Response,
+        builder: Builder,
+        callback: org.quick.http.callback.Callback<T>
+    ) {
         removeTask(builder, call.request())
         val data = checkOOM(response)
         if (checkBinderIsExist(builder)) {
@@ -255,11 +271,11 @@ object HttpService {
         callback.onStart()
         getCall(normalClient, request, builder).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
-                onFailure(call,e,builder,callback)
+                onFailure(call, e, builder, callback)
             }
 
             override fun onResponse(call: Call, response: Response) {
-                onResponse(call,response,builder,callback)
+                onResponse(call, response, builder, callback)
             }
         })
 
@@ -275,11 +291,11 @@ object HttpService {
         callback.onStart()
         getCall(normalClient, request, builder).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
-                onFailure(call,e,builder,callback)
+                onFailure(call, e, builder, callback)
             }
 
             override fun onResponse(call: Call, response: Response) {
-                onResponse(call,response,builder,callback)
+                onResponse(call, response, builder, callback)
             }
         })
     }
@@ -316,16 +332,17 @@ object HttpService {
             }
         }
 
-        val request = Request.Builder().url(configUrl(builder.url)).tag(builder.tag).post(multipartBody.build()).build()
+        val request = Request.Builder().url(configUrl(builder.url)).tag(builder.tag)
+            .post(multipartBody.build()).build()
 
         callback.onStart()
         getCall(uploadingClient, request, builder).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
-                onFailure(call,e,builder,callback)
+                onFailure(call, e, builder, callback)
             }
 
             override fun onResponse(call: Call, response: Response) {
-                onResponse(call,response,builder,callback)
+                onResponse(call, response, builder, callback)
             }
         })
     }
@@ -338,17 +355,22 @@ object HttpService {
             onDownloadListener.onStart()
         val request = getRequest(builder).build()
         getCall(
-            downloadClient.addNetworkInterceptor(DownloadInterceptor(builder, onDownloadListener)).build(),
+            downloadClient.addNetworkInterceptor(
+                DownloadInterceptor(
+                    builder,
+                    onDownloadListener
+                )
+            ).build(),
             request,
             builder
         )
             .enqueue(object : Callback {
                 override fun onFailure(call: Call, e: IOException) {
-                    onFailure(call,e,builder,onDownloadListener)
+                    onFailure(call, e, builder, onDownloadListener)
                 }
 
                 override fun onResponse(call: Call, response: Response) {
-                    download(call,response,builder,onDownloadListener)
+                    download(call, response, builder, onDownloadListener)
                 }
             })
     }
@@ -361,22 +383,32 @@ object HttpService {
             onDownloadListener.onStart()
         val request = postRequest(builder).build()
         getCall(
-            downloadClient.addNetworkInterceptor(DownloadInterceptor(builder, onDownloadListener)).build(),
+            downloadClient.addNetworkInterceptor(
+                DownloadInterceptor(
+                    builder,
+                    onDownloadListener
+                )
+            ).build(),
             request,
             builder
         )
             .enqueue(object : Callback {
                 override fun onFailure(call: Call, e: IOException) {
-                    onFailure(call,e,builder,onDownloadListener)
+                    onFailure(call, e, builder, onDownloadListener)
                 }
 
                 override fun onResponse(call: Call, response: Response) {
-                    download(call,response,builder,onDownloadListener)
+                    download(call, response, builder, onDownloadListener)
                 }
             })
     }
 
-    private fun download(call: Call, response: Response,builder: Builder, onDownloadListener: OnDownloadListener){
+    private fun download(
+        call: Call,
+        response: Response,
+        builder: Builder,
+        onDownloadListener: OnDownloadListener
+    ) {
         if (checkBinderIsExist(builder))
             Utils.writeFile(
                 response.body?.byteStream(),
@@ -413,7 +445,8 @@ object HttpService {
      * 获取本地文件的总长度
      */
     private fun getLocalDownloadLength(builder: Builder): Long {
-        val file = File(Config.cachePath + File.separatorChar + Utils.getFileName(configUrl(builder.url)))
+        val file =
+            File(Config.cachePath + File.separatorChar + Utils.getFileName(configUrl(builder.url)))
         return if (file.exists()) file.length() else 0
     }
 
@@ -425,7 +458,7 @@ object HttpService {
         if (builder.downloadEndIndex == 0L)/*没有指定下载结束*/
             downloadClient.build().newCall(postRequest(builder).build()).enqueue(object : Callback {
                 override fun onFailure(call: Call, e: IOException) {
-                    onFailure(call,e,builder,onDownloadListener)
+                    onFailure(call, e, builder, onDownloadListener)
                 }
 
                 override fun onResponse(call: Call, response: Response) {

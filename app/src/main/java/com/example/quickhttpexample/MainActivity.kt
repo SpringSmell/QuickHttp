@@ -1,5 +1,6 @@
 package com.example.quickhttpexample
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
@@ -132,6 +133,9 @@ class MainActivity : AppCompatActivity() {
                     }
 
                 })
+        }
+        tv3.setOnClickListener {
+            startActivity(Intent(this,FragmentActivity::class.java))
         }
     }
 }
