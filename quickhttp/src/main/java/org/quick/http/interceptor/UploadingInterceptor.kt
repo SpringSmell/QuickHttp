@@ -18,9 +18,9 @@ class UploadingInterceptor : Interceptor {
         val response = chain.proceed(request)
 
         Log.d("HttpService"," ")
-        Log.d("HttpService","----Uploading---")
+        Log.d("HttpService",String.format("----Uploading %s---",request.method))
         Log.d("HttpService","----url        = " + request.url.toString())
-
+        Log.d("HttpService","----header     = " + LoggingInterceptor.parseHeader(request.headers))
         val resultStr = try {
             String(response.body!!.bytes())
         } catch (O_O: OutOfMemoryError) {

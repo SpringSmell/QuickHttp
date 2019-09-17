@@ -180,7 +180,6 @@ object HttpService {
             .post(getRequestBody(builder))
         builder.header.keySet().forEach { request.addHeader(it, builder.header.get(it).toString()) }
         Config.header.keySet().forEach { request.addHeader(it, Config.header.get(it).toString()) }
-
         if (builder.isDownloadBreakpoint && builder.downloadEndIndex != 0L) request.addHeader(
             "RANGE",
             String.format("bytes=%d-%d", builder.downloadStartIndex, builder.downloadEndIndex)
@@ -305,10 +304,16 @@ object HttpService {
      * 上传文件
      */
     private fun <T> uploadingWithJava(builder: Builder, callback: OnUploadingListener<T>) {
-        val multipartBody = MultipartBody.Builder().setType(MultipartBody.MIXED)
+
+        val multipartBody = MultipartBody.Builder().setType(MultipartBody.FORM)
+
         builder.requestBodyBundle.keySet().forEach {
             multipartBody.addFormDataPart(it, builder.requestBodyBundle.get(it).toString())
         }
+        Config.params.keySet().forEach {
+            multipartBody.addFormDataPart(it, Config.params.get(it).toString())
+        }
+
         builder.fileBundle.keySet().forEach {
             when (val obj = builder.fileBundle.getSerializable(it)) {
                 is File ->
@@ -332,11 +337,12 @@ object HttpService {
             }
         }
 
-        val request = Request.Builder().url(configUrl(builder.url)).tag(builder.tag)
-            .post(multipartBody.build()).build()
+        val request = Request.Builder().url(configUrl(builder.url)).tag(builder.tag).post(multipartBody.build())
+        builder.header.keySet().forEach { request.addHeader(it, builder.header.get(it).toString()) }
+        Config.header.keySet().forEach { request.addHeader(it, Config.header.get(it).toString()) }
 
         callback.onStart()
-        getCall(uploadingClient, request, builder).enqueue(object : Callback {
+        getCall(uploadingClient, request.build(), builder).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 onFailure(call, e, builder, callback)
             }

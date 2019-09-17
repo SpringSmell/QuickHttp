@@ -19,8 +19,9 @@ class DownloadInterceptor(var builder: HttpService.Builder, var onProgressCallba
         val originalResponse = chain.proceed(chain.request())
 
         Log.d("HttpService"," ")
-        Log.d("HttpService","----Download----")
+        Log.d("HttpService",String.format("----Download %s---",request.method))
         Log.d("HttpService","----url        = " + request.url.toString())
+        Log.d("HttpService","----header     = " + LoggingInterceptor.parseHeader(request.headers))
 
         if (request.method == "POST")
             Log.d("HttpService",String.format("----params     = %s", LoggingInterceptor.parseRequest(request)))

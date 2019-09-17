@@ -14,9 +14,10 @@ class LoggingInterceptor : Interceptor {
 
         val response = chain.proceed(request)
 
-        Log.d("HttpService"," ")
-        Log.d("HttpService","----Request-----")
-        Log.d("HttpService","----url        = " + request.url.toString())
+        Log.d("HttpService", " ")
+        Log.d("HttpService", String.format("----Request %s---", request.method))
+        Log.d("HttpService", "----url        = " + request.url.toString())
+        Log.d("HttpService", "----header     = " + parseHeader(request.headers))
 
         val resultStr = try {
             String(response.body!!.bytes())
@@ -25,15 +26,18 @@ class LoggingInterceptor : Interceptor {
         }
 
         if (request.method == "POST")
-            Log.d("HttpService",String.format("----params     = %s", parseRequest(request)))
+            Log.d("HttpService", String.format("----params     = %s", parseRequest(request)))
 
-        Log.d("HttpService",String.format("----result     = %s", resultStr))
-        Log.d("HttpService",String.format("----Response---- %d ms", System.currentTimeMillis() - startTime))
-        Log.d("HttpService"," ")
+        Log.d("HttpService", String.format("----result     = %s", resultStr))
+        Log.d(
+            "HttpService",
+            String.format("----Response---- %d ms", System.currentTimeMillis() - startTime)
+        )
+        Log.d("HttpService", " ")
 
         return response.newBuilder()
-                .body(ResponseBody.create(Utils.mediaTypeJson, resultStr))
-                .build()
+            .body(ResponseBody.create(Utils.mediaTypeJson, resultStr))
+            .build()
     }
 
     companion object {
@@ -62,7 +66,21 @@ class LoggingInterceptor : Interceptor {
             for (index in 0 until formBody.size)
                 params += formBody.encodedName(index) + " = " + formBody.encodedValue(index) + " , "
 
-            return String.format("{ %s }", if (params.length > 2) params.substring(0, params.length - 2) else params)
+            return String.format(
+                "{ %s }",
+                if (params.length > 2) params.substring(0, params.length - 2) else params
+            )
+        }
+
+        fun parseHeader(headers: Headers): String {
+            var params = ""
+            headers.forEach {
+                params += it.first + " = " + it.second + " , "
+            }
+            return String.format(
+                "{ %s }",
+                if (params.length > 2) params.substring(0, params.length - 2) else params
+            )
         }
     }
 }

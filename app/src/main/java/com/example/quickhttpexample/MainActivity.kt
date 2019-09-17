@@ -30,10 +30,10 @@ class MainActivity : AppCompatActivity() {
         HttpService.Builder("").get()
     }
 
-    fun config(){
+    fun config() {
         HttpService.Config
             .baseUrl("https://www.baseurl.com")/*默认为空*/
-            .addParams("TOKEN", "token")/*公共参数*/
+//            .addParams("TOKEN", "token")/*公共参数*/
             .method(true)/*默认为GET请求*/
             .addHeader("key", "value")/*公共头部参数*/
             .connectTimeout(200000)/*超时时间*/
@@ -50,6 +50,7 @@ class MainActivity : AppCompatActivity() {
 
             })
     }
+
     fun onInit() {
 
 
@@ -57,16 +58,17 @@ class MainActivity : AppCompatActivity() {
             /*普通请求*/
             HttpService.Builder("https://www.baidu.com/")
                 .get()
-                .addParams("test","test")
+                .addHeader("header1","123")
+                .addParams("test", "test")
                 .enqueue(object : Callback<BeanKotlin>() {
-                override fun onFailure(e: Throwable, isNetworkError: Boolean) {
-                    e.printStackTrace()
-                }
+                    override fun onFailure(e: Throwable, isNetworkError: Boolean) {
+                        e.printStackTrace()
+                    }
 
-                override fun onResponse(value: BeanKotlin?) {
+                    override fun onResponse(value: BeanKotlin?) {
 
-                }
-            })
+                    }
+                })
         }
         tv1.setOnClickListener {
             /*下载*/
@@ -79,7 +81,12 @@ class MainActivity : AppCompatActivity() {
                         Log.e("HttpService", "onStart")
                     }
 
-                    override fun onLoading(key: String, bytesRead: Long, totalCount: Long, isDone: Boolean) {
+                    override fun onLoading(
+                        key: String,
+                        bytesRead: Long,
+                        totalCount: Long,
+                        isDone: Boolean
+                    ) {
                         tv1.text = String.format("下载文件[%s]：%d/%d", key, bytesRead, totalCount)
                     }
 
@@ -100,18 +107,31 @@ class MainActivity : AppCompatActivity() {
         }
         tv2.setOnClickListener {
             /*上传*/
-            HttpService.Builder("https://www.baidu.com")
-                .addParams("file", File(Utils.saveSDCardPath + File.separatorChar + "weixin673android1360.apk"))
-                .addParams("file2", File(Utils.saveSDCardPath + File.separatorChar + "weixin673android1360.apk"))
-                .addParams("userName", "151*****066")
-                .addParams("passWord", "888888")
-                .enqueue(object : OnUploadingListener<BeanJava>() {
+            var token =
+                "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyIwIjoiaWQiLCJzdWIiOjU4LCJpc3MiOiJodHRwOi8vZGV2LmppcnVhbm9zLmNvbS9hcGkvbG9naW4tYnktcGhvbmUiLCJpYXQiOjE1Njg2MzIwMzQsImV4cCI6MTU5OTczNjAzNCwibmJmIjoxNTY4NjMyMDM0LCJqdGkiOiJWZjlJeElVZW9pMDY2ZndwIn0.i3UO2OL1IPiQ-7GTVxlJg9S66kiyJ8K0RQfaKft8pU4"
+            HttpService.Builder("http://dev.jiruanos.com/api/user/avatarUpdate")
+                .addHeader("Authorization", token)
+//                .addParams("file", File(Utils.saveSDCardPath + File.separatorChar + "weixin673android1360.apk"))
+//                .addParams("file2", File(Utils.saveSDCardPath + File.separatorChar + "weixin673android1360.apk"))
+                .addParams(
+                    "avatar",
+                    File("/storage/emulated/0/CacheQuickAndroid/SampleCropImage.png")
+                )
+                .addParams("token", token)
+//                .addParams("userName", "151*****066")
+//                .addParams("passWord", "888888")
+                .enqueue(object : OnUploadingListener<String>() {
 
                     override fun onStart() {
                         super.onStart()
                     }
 
-                    override fun onLoading(key: String, bytesRead: Long, totalCount: Long, isDone: Boolean) {
+                    override fun onLoading(
+                        key: String,
+                        bytesRead: Long,
+                        totalCount: Long,
+                        isDone: Boolean
+                    ) {
                         tv2.text = String.format("上传文件[%s]：%d/%d", key, bytesRead, totalCount)
 //                                        Log.d("HttpService",String.format("正在上传[%s]：%s/%s", key, bytesRead.toString(), totalCount.toString()))
 
@@ -119,8 +139,8 @@ class MainActivity : AppCompatActivity() {
                         else if ("file2" == key && isDone) Log.e("HttpService", "file2上传完成")
                     }
 
-                    override fun onResponse(value: BeanJava?) {
-                        tv2.text = String.format("上传完成：%s", "value?.msg")
+                    override fun onResponse(value: String?) {
+                        tv2.text = String.format("上传完成：%s", value)
 //                        Log.e("HttpService",value)
                     }
 
@@ -137,7 +157,7 @@ class MainActivity : AppCompatActivity() {
                 })
         }
         tv3.setOnClickListener {
-            startActivity(Intent(this,FragmentActivity::class.java))
+            startActivity(Intent(this, FragmentActivity::class.java))
         }
     }
 }
