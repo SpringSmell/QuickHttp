@@ -192,7 +192,7 @@ object HttpService {
     /**
      * 配置URL
      */
-    private fun configUrl(postfix: String): String {
+    fun configUrl(postfix: String): String {
         return if (Utils.isHttpUrlFormRight(postfix))
             postfix
         else
@@ -413,7 +413,7 @@ object HttpService {
             Utils.writeFile(
                 response.body?.byteStream(),
                 Config.cachePath,
-                Utils.getFileName(configUrl(builder.url)),
+                builder.downloadFileName,
                 builder.isDownloadBreakpoint,
                 object : OnWriteListener {
                     override fun onLoading(
@@ -445,8 +445,9 @@ object HttpService {
      * 获取本地文件的总长度
      */
     private fun getLocalDownloadLength(builder: Builder): Long {
-        val file =
-            File(Config.cachePath + File.separatorChar + Utils.getFileName(configUrl(builder.url)))
+        val file = File(
+            Config.cachePath + File.separatorChar + builder.downloadFileName
+        )
         return if (file.exists()) file.length() else 0
     }
 
@@ -466,13 +467,7 @@ object HttpService {
                     response.body?.close()
                     if (builder.downloadEndIndex == builder.downloadStartIndex) {/*本地与线上一致*/
                         Async.runOnUiThread {
-                            onDownloadListener.onResponse(
-                                File(
-                                    Config.cachePath + File.separatorChar + Utils.getFileName(
-                                        configUrl(builder.url)
-                                    )
-                                )
-                            )
+                            onDownloadListener.onResponse(File(Config.cachePath + File.separatorChar + builder.downloadFileName))
                             onDownloadListener.onEnd()
                         }
                     } else
@@ -533,6 +528,7 @@ object HttpService {
         internal var downloadStartIndex = 0L
         internal var downloadEndIndex = 0L
         internal var isDownloadBreakpoint = true/*是否断点下载*/
+        internal var downloadFileName: String = ""
 
         internal var fragment: androidx.fragment.app.Fragment? = null
         internal var activity: Activity? = null
@@ -805,6 +801,9 @@ object HttpService {
         override fun <T> enqueue(callback: org.quick.http.callback.Callback<T>) {
             when (callback) {
                 is OnDownloadListener -> {/*下载*/
+                    if (builder.downloadFileName == "")
+                        builder.downloadFileName = Utils.getFileName(configUrl(builder.url))
+
                     if (builder.isDownloadBreakpoint) {
                         if (builder.downloadStartIndex == 0L)
                             builder.downloadStartIndex = getLocalDownloadLength(builder)

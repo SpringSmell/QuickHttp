@@ -70,7 +70,9 @@ class MainActivity : AppCompatActivity() {
         }
         tv1.setOnClickListener {
             /*下载*/
-            HttpService.Builder("https://dldir1.qq.com/weixin/android/weixin673android1360.apk")
+            //http://video.haodanku.com/95ec3a0a93f144790a8e777eb0c69d9d?attname=1568698684.mp4
+            //https://dldir1.qq.com/weixin/android/weixin673android1360.apk
+            HttpService.Builder("http://video.haodanku.com/95ec3a0a93f144790a8e777eb0c69d9d?attname=1568698684.mp4")
                 .downloadBreakpoint(false)/*断点下载：不调用此方法默认为true*/
                 .enqueue(object : OnDownloadListener() {
                     override fun onStart() {

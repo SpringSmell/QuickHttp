@@ -9,7 +9,11 @@ import org.quick.http.callback.OnProgressCallback
 /**
  * 下载进度监听-响应体
  */
-class ProgressResponseBody(var builder: HttpService.Builder, var responseBody: ResponseBody, var onProgressCallback: OnProgressCallback) : ResponseBody() {
+class ProgressResponseBody(
+    var builder: HttpService.Builder,
+    var responseBody: ResponseBody,
+    var onProgressCallback: OnProgressCallback
+) : ResponseBody() {
 
     var bufferedSource: BufferedSource
 
@@ -34,7 +38,12 @@ class ProgressResponseBody(var builder: HttpService.Builder, var responseBody: R
                 val bytesRead = super.read(sink, byteCount)
                 totalBytesRead += if (bytesRead != -1L) bytesRead else 0
                 Async.runOnUiThread {
-                    onProgressCallback.onLoading(Utils.getFileName(builder.url), totalBytesRead, contentLength(), bytesRead == -1L)
+                    onProgressCallback.onLoading(
+                        builder.downloadFileName,
+                        totalBytesRead,
+                        contentLength(),
+                        bytesRead == -1L
+                    )
                 }
                 return bytesRead
             }

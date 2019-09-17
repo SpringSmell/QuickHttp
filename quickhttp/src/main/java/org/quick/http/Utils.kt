@@ -41,9 +41,9 @@ object Utils {
         var fileName = System.currentTimeMillis().toString()
         val endIndex = url.lastIndexOf('/')
         if (endIndex != -1 && url.length != endIndex + 1) {
-            fileName = url.substring(endIndex + 1, url.length)
-            val endIndex = fileName.lastIndexOf('?')
-            if (endIndex != -1) fileName = fileName.substring(0, endIndex)
+            fileName = url.substring(endIndex + 1, url.length).replace('?','_').replace('=','_').replace('/','_').replace('\\','_')
+//            val endIndex = fileName.lastIndexOf('?')
+//            if (endIndex != -1) fileName = fileName.substring(0, endIndex)
         }
         return fileName
     }
