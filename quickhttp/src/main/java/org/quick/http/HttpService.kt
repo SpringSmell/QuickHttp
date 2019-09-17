@@ -337,7 +337,8 @@ object HttpService {
             }
         }
 
-        val request = Request.Builder().url(configUrl(builder.url)).tag(builder.tag).post(multipartBody.build())
+        val request = Request.Builder().url(configUrl(builder.url)).tag(builder.tag)
+            .post(multipartBody.build())
         builder.header.keySet().forEach { request.addHeader(it, builder.header.get(it).toString()) }
         Config.header.keySet().forEach { request.addHeader(it, Config.header.get(it).toString()) }
 
@@ -646,6 +647,11 @@ object HttpService {
 
         fun addParams(key: String, value: ArrayList<File>): Builder {
             fileBundle.putSerializable(key, value)
+            return this
+        }
+
+        fun downloadFileName(fileName: String): Builder {
+            this.downloadFileName = fileName
             return this
         }
 

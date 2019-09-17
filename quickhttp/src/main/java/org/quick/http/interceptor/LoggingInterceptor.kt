@@ -50,6 +50,7 @@ class LoggingInterceptor : Interceptor {
                 }
                 is MultipartBody -> {
                     requestBody.parts.forEach {
+
                         val body = it.body
                         params += when (body) {
                             is FormBody -> parseFormBody(body)
