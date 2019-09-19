@@ -40,7 +40,7 @@ class MainActivity : AppCompatActivity() {
             .encoding("UTF-8")/*编码*/
             .retryConnection(true)/*连接异常是否重试：默认为true*/
             .onRequestBefore {
-                it.addHeader("header2", "header1").addParams("test324","123213")
+                it.addHeader("header2", "header1").addParams("test324", "123213")
             }
             .onRequestStatus(object : OnRequestStatusCallback {
                 override fun onFailure(e: Throwable, isNetworkError: Boolean) {
@@ -58,17 +58,15 @@ class MainActivity : AppCompatActivity() {
 
         tv0.setOnClickListener {
             /*普通请求*/
-            HttpService.Builder("https://www.baidu.com/")
+            HttpService.Builder("http://api.jiruanos.com/api/user/profile")
                 .get()
-                .addHeader("header1", "123")
-                .addParams("test", "test")
-                .enqueue(object : Callback<BeanKotlin>() {
+                .enqueue(object : Callback<BeanJava2>() {
                     override fun onFailure(e: Throwable, isNetworkError: Boolean) {
                         e.printStackTrace()
                     }
 
-                    override fun onResponse(value: BeanKotlin?) {
-
+                    override fun onResponse(value: BeanJava2?) {
+                        var test = ""
                     }
                 })
         }

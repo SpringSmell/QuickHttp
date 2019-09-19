@@ -2,6 +2,7 @@ package org.quick.http
 
 import android.util.Log
 import com.squareup.moshi.Moshi
+import com.squareup.moshi.Types
 import org.json.JSONArray
 import java.util.ArrayList
 
@@ -14,6 +15,21 @@ object JsonUtils {
         jsonAdapter.fromJson(json)
     } catch (O_O: Exception) {
         Log.e("Gson", "json or class error , from  " + T::class.java.simpleName + " error json :" + json)
+        null
+    }
+
+    /**
+     * 将json解析成java对象
+     *
+     * @param json
+     * @param cls
+     * @return
+     */
+    fun <T> parseFromJson(json: String?, cls: Class<T>,vararg clss:Class<T>): T? = try {
+        moshi.adapter<T>(Types.newParameterizedType(cls,*clss)).fromJson(json)
+    } catch (ex: Exception) {
+        ex.printStackTrace()
+        Log.e("Gson", "json or class error , from  " + cls.simpleName + " error json :" + json)
         null
     }
 

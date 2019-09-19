@@ -2,9 +2,11 @@
 
 package org.quick.http
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.os.Bundle
 import android.text.TextUtils
+import com.squareup.moshi.Types
 import okhttp3.*
 import org.quick.async.Async
 import org.quick.http.Utils.mediaTypeFile
@@ -253,7 +255,7 @@ object HttpService {
             Async.runOnUiThread {
                 if (callback.tClass == String::class.java) callback.onResponse(data as T)
                 else {
-                    val model = JsonUtils.parseFromJson(data, callback.tClass)
+                    val model = JsonUtils.parseFromJson(data,callback.tClass,*callback.tAgainTClzList.toTypedArray())
                     if (model == null) Config.onRequestCallback?.onErrorParse(data)
                     callback.onResponse(model)
                 }
