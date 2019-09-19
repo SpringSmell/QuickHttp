@@ -18,7 +18,8 @@ import java.util.concurrent.Executors
 
 
 object Utils {
-    val saveSDCardPath = Environment.getExternalStorageDirectory().absolutePath + File.separator + "QuickAndroid"
+    val saveSDCardPath =
+        Environment.getExternalStorageDirectory().absolutePath + File.separator + "QuickAndroid"
     const val MAX_SKIP_BUFFER_SIZE = 2048/*最大缓冲区大小*/
 
     /**
@@ -41,7 +42,8 @@ object Utils {
         var fileName = System.currentTimeMillis().toString()
         val endIndex = url.lastIndexOf('/')
         if (endIndex != -1 && url.length != endIndex + 1) {
-            fileName = url.substring(endIndex + 1, url.length).replace('?','_').replace('=','_').replace('/','_').replace('\\','_')
+            fileName = url.substring(endIndex + 1, url.length).replace('?', '_').replace('=', '_')
+                .replace('/', '_').replace('\\', '_')
 //            val endIndex = fileName.lastIndexOf('?')
 //            if (endIndex != -1) fileName = fileName.substring(0, endIndex)
         }
@@ -59,7 +61,16 @@ object Utils {
      */
     fun formatGet(url: String, bundle: Bundle?): String {
         val params = formatParamsGet(bundle)
-        return String.format("%s?%s", url, params)
+        var tempUrl = String.format("%s?%s", url, params)
+
+        tempUrl=if (tempUrl.endsWith('&'))
+            tempUrl.substring(0, url.length - 1)
+        else
+            tempUrl
+        return if (tempUrl.endsWith('?'))
+            tempUrl.substring(0, url.length - 1)
+        else
+            tempUrl
     }
 
     fun formatParamsGet(bundle: Bundle?): String {
@@ -68,7 +79,7 @@ object Utils {
             params += it + '=' + bundle.get(it).toString() + '&'
         }
 
-        if (params.length > 1) params = params.substring(0, params.length - 1)
+        if (params.endsWith('&')) params = params.substring(0, params.length - 1)
 
         return params
     }

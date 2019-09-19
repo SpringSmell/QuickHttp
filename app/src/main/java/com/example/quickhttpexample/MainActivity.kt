@@ -33,12 +33,15 @@ class MainActivity : AppCompatActivity() {
     fun config() {
         HttpService.Config
             .baseUrl("https://www.baseurl.com")/*默认为空*/
-//            .addParams("TOKEN", "token")/*公共参数*/
+            .addParams("TOKEN", "token")/*公共参数*/
             .method(true)/*默认为GET请求*/
             .addHeader("key", "value")/*公共头部参数*/
             .connectTimeout(200000)/*超时时间*/
             .encoding("UTF-8")/*编码*/
             .retryConnection(true)/*连接异常是否重试：默认为true*/
+            .onRequestBefore {
+                it.addHeader("header2", "header1").addParams("test324","123213")
+            }
             .onRequestStatus(object : OnRequestStatusCallback {
                 override fun onFailure(e: Throwable, isNetworkError: Boolean) {
 
@@ -53,12 +56,11 @@ class MainActivity : AppCompatActivity() {
 
     fun onInit() {
 
-
         tv0.setOnClickListener {
             /*普通请求*/
             HttpService.Builder("https://www.baidu.com/")
                 .get()
-                .addHeader("header1","123")
+                .addHeader("header1", "123")
                 .addParams("test", "test")
                 .enqueue(object : Callback<BeanKotlin>() {
                     override fun onFailure(e: Throwable, isNetworkError: Boolean) {

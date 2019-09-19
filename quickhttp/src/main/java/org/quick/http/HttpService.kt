@@ -145,10 +145,12 @@ object HttpService {
     private fun getRequest(builder: Builder): Request.Builder {
         val url = when {
             builder.requestBodyBundle.size() > 0 -> {
-                Utils.formatGet(
-                    configUrl(builder.url),
-                    builder.requestBodyBundle
-                ) + '&' + Utils.formatParamsGet(Config.params)
+                if (Config.params.size() > 0) {
+                    Utils.formatGet(configUrl(builder.url), builder.requestBodyBundle) +
+                            '&' +
+                            Utils.formatParamsGet(Config.params)
+                } else
+                    Utils.formatGet(configUrl(builder.url), builder.requestBodyBundle)
             }
             Config.params.size() > 0 -> {
                 Utils.formatGet(
@@ -191,7 +193,7 @@ object HttpService {
     /**
      * 配置URL
      */
-    fun configUrl(postfix: String): String {
+    private fun configUrl(postfix: String): String {
         return if (Utils.isHttpUrlFormRight(postfix))
             postfix
         else
@@ -377,7 +379,7 @@ object HttpService {
                 }
 
                 override fun onResponse(call: Call, response: Response) {
-                    download(call, response, builder, onDownloadListener)
+                    writeDownload(call, response, builder, onDownloadListener)
                 }
             })
     }
@@ -405,12 +407,15 @@ object HttpService {
                 }
 
                 override fun onResponse(call: Call, response: Response) {
-                    download(call, response, builder, onDownloadListener)
+                    writeDownload(call, response, builder, onDownloadListener)
                 }
             })
     }
 
-    private fun download(
+    /**
+     * 写入
+     */
+    private fun writeDownload(
         call: Call,
         response: Response,
         builder: Builder,
@@ -711,6 +716,8 @@ object HttpService {
         /*如果遇到连接问题，是否重试*/
         internal var isRetryConnection = true
         internal var cachePath: String = Utils.saveSDCardPath
+        /*请求之前回调*/
+        internal var onRequestBeforeListener: ((builder: Builder) -> Unit)? = null
         internal var onRequestCallback: OnRequestStatusCallback? = null
 
         fun baseUrl(url: String): Config {
@@ -800,8 +807,20 @@ object HttpService {
             return this
         }
 
-        fun onRequestStatus(onRequestCallback: OnRequestStatusCallback) {
+        /**
+         * 每次-请求之前回调
+         */
+        fun onRequestBefore(listener: (builder: Builder) -> Unit): Config {
+            this.onRequestBeforeListener = listener
+            return this
+        }
+
+        /**
+         * 每次-请求失败异常回调
+         */
+        fun onRequestStatus(onRequestCallback: OnRequestStatusCallback): Config {
             this.onRequestCallback = onRequestCallback
+            return this
         }
     }
 
@@ -811,6 +830,7 @@ object HttpService {
          * 异步执行
          */
         override fun <T> enqueue(callback: org.quick.http.callback.Callback<T>) {
+            Config.onRequestBeforeListener?.invoke(builder)
             when (callback) {
                 is OnDownloadListener -> {/*下载*/
                     if (builder.downloadFileName == "")
