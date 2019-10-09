@@ -74,8 +74,14 @@ class MainActivity : AppCompatActivity() {
             /*下载*/
             //http://video.haodanku.com/95ec3a0a93f144790a8e777eb0c69d9d?attname=1568698684.mp4
             //https://dldir1.qq.com/weixin/android/weixin673android1360.apk
-            HttpService.Builder("http://video.haodanku.com/95ec3a0a93f144790a8e777eb0c69d9d?attname=1568698684.mp4")
-                .downloadBreakpoint(false)/*断点下载：不调用此方法默认为true*/
+            //https://download.alicdn.com/wireless/juhuasuan4android/latest/juhuasuan_701073.apk
+            //https://s.beta.myapp.com/myapp/rdmexp/exp/file2/2019/10/08/comjuzhewww_1.0.0Beta_0493c6f9-09cd-5d8f-a297-97a7cca061a2.apk
+            //http://video.haodanku.com/95ec3a0a93f144790a8e777eb0c69d9d?attname=1568698684.mp4
+//            val url="https://s.beta.myapp.com/myapp/rdmexp/exp/file2/2019/10/08/comjuzhewww_1.0.0Beta_0493c6f9-09cd-5d8f-a297-97a7cca061a2.apk"
+            val url="https://download.alicdn.com/wireless/juhuasuan4android/latest/juhuasuan_701073.apk"
+            HttpService.Builder(url)
+                .downloadBreakpoint(true)/*断点下载：不调用此方法默认为true*/
+                .get()
                 .enqueue(object : OnDownloadListener() {
                     override fun onStart() {
                         Log.e("HttpService", "onStart")

@@ -63,7 +63,7 @@ object Utils {
         val params = formatParamsGet(bundle)
         var tempUrl = String.format("%s?%s", url, params)
 
-        tempUrl=if (tempUrl.endsWith('&'))
+        tempUrl = if (tempUrl.endsWith('&'))
             tempUrl.substring(0, url.length - 1)
         else
             tempUrl
@@ -159,14 +159,16 @@ object Utils {
                             lastTime = System.currentTimeMillis()
                         }
                     }
-                    if (!isDone) Async.runOnUiThread {
-                        onWriteListener.onLoading(
-                            fileName,
-                            redCount,
-                            totalCount,
-                            true
-                        )
-                    }/*之前有延迟100毫秒，或许会造成最后一次未返回*/
+
+                    if (!isDone)/*之前有延迟100毫秒，或许会造成最后一次未返回*/
+                        Async.runOnUiThread {
+                            onWriteListener.onLoading(
+                                fileName,
+                                redCount,
+                                totalCount,
+                                true
+                            )
+                        }
                     fileOutputStream.close()
                     inputStream.close()
                     return file

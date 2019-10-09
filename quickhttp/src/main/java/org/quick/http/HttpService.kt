@@ -168,10 +168,11 @@ object HttpService {
         builder.header.keySet().forEach { request.addHeader(it, builder.header.get(it).toString()) }
         Config.header.keySet().forEach { request.addHeader(it, Config.header.get(it).toString()) }
 
-        if (builder.isDownloadBreakpoint && builder.downloadEndIndex != 0L) request.addHeader(
-            "RANGE",
-            String.format("bytes=%d-%d", builder.downloadStartIndex, builder.downloadEndIndex)
-        )
+        if (builder.isDownloadBreakpoint && builder.downloadEndIndex != 0L)
+            request.addHeader(
+                "RANGE",
+                String.format("bytes=%d-%d", builder.downloadStartIndex, builder.downloadEndIndex)
+            )
 
         return request
     }
@@ -180,14 +181,18 @@ object HttpService {
      * 构建Post请求，并添加默认参数
      */
     private fun postRequest(builder: Builder): Request.Builder {
-        val request = Request.Builder().url(configUrl(builder.url)).tag(builder.tag)
-            .post(getRequestBody(builder))
+        val request =
+            Request.Builder()
+                .url(configUrl(builder.url))
+                .tag(builder.tag)
+                .post(getRequestBody(builder))
         builder.header.keySet().forEach { request.addHeader(it, builder.header.get(it).toString()) }
         Config.header.keySet().forEach { request.addHeader(it, Config.header.get(it).toString()) }
-        if (builder.isDownloadBreakpoint && builder.downloadEndIndex != 0L) request.addHeader(
-            "RANGE",
-            String.format("bytes=%d-%d", builder.downloadStartIndex, builder.downloadEndIndex)
-        )
+        if (builder.isDownloadBreakpoint && builder.downloadEndIndex != 0L)
+            request.addHeader(
+                "RANGE",
+                String.format("bytes=%d-%d", builder.downloadStartIndex, builder.downloadEndIndex)
+            )
 
         return request
     }
@@ -255,7 +260,11 @@ object HttpService {
             Async.runOnUiThread {
                 if (callback.tClass == String::class.java) callback.onResponse(data as T)
                 else {
-                    val model = JsonUtils.parseFromJson(data,callback.tClass,*callback.tAgainTClzList.toTypedArray())
+                    val model = JsonUtils.parseFromJson(
+                        data,
+                        callback.tClass,
+                        *callback.tAgainTClzList.toTypedArray()
+                    )
                     if (model == null) Config.onRequestCallback?.onErrorParse(data)
                     callback.onResponse(model)
                 }
@@ -362,7 +371,7 @@ object HttpService {
      * 使用GET方式下载文件
      */
     private fun downloadGet(builder: Builder, onDownloadListener: OnDownloadListener) {
-        if (!builder.isDownloadBreakpoint)/*在断点下载的方法里已经调用了onStart方法*/
+        if (!builder.isDownloadBreakpoint)/*在断点下载的方法里已经调用了onStart方法，此时忽略*/
             onDownloadListener.onStart()
         val request = getRequest(builder).build()
         getCall(
@@ -470,25 +479,43 @@ object HttpService {
      */
     private fun downloadBreakpoint(builder: Builder, onDownloadListener: OnDownloadListener) {
         onDownloadListener.onStart()
-        if (builder.downloadEndIndex == 0L)/*没有指定下载结束*/
-            downloadClient.build().newCall(postRequest(builder).build()).enqueue(object : Callback {
-                override fun onFailure(call: Call, e: IOException) {
-                    onFailure(call, e, builder, onDownloadListener)
-                }
-
-                override fun onResponse(call: Call, response: Response) {
-                    builder.downloadEndIndex = response.body!!.contentLength()
-                    response.body?.close()
-                    if (builder.downloadEndIndex == builder.downloadStartIndex) {/*本地与线上一致*/
-                        Async.runOnUiThread {
-                            onDownloadListener.onResponse(File(Config.cachePath + File.separatorChar + builder.downloadFileName))
-                            onDownloadListener.onEnd()
+        when {
+            builder.downloadEndIndex == 0L ->/*没有指定下载结束*/ {
+                downloadClient
+                    .build()
+                    .newCall(
+                        if (builder.method == "GET")
+                            getRequest(builder).build()
+                        else
+                            postRequest(builder).build()
+                    ).enqueue(object : Callback {
+                        override fun onFailure(call: Call, e: IOException) {
+                            onFailure(call, e, builder, onDownloadListener)
                         }
-                    } else
-                        downloadPost(builder, onDownloadListener)
-                }
-            })
-        else downloadPost(builder, onDownloadListener)
+
+                        override fun onResponse(call: Call, response: Response) {
+                            builder.downloadEndIndex = response.body!!.contentLength()
+                            response.body?.close()
+                            when {
+                                builder.downloadEndIndex == builder.downloadStartIndex -> /*本地与线上一致*/
+                                    Async.runOnUiThread {
+                                        onDownloadListener.onResponse(File(Config.cachePath + File.separatorChar + builder.downloadFileName))
+                                        onDownloadListener.onEnd()
+                                    }
+                                builder.method == "GET" ->
+                                    downloadGet(builder, onDownloadListener)
+                                else ->
+                                    downloadPost(builder, onDownloadListener)
+                            }
+                        }
+                    })
+            }
+            builder.method == "GET" ->
+                downloadGet(builder, onDownloadListener)
+            else ->
+                downloadPost(builder, onDownloadListener)
+        }
+
     }
 
     /**
@@ -838,13 +865,18 @@ object HttpService {
                     if (builder.downloadFileName == "")
                         builder.downloadFileName = Utils.getFileName(configUrl(builder.url))
 
-                    if (builder.isDownloadBreakpoint) {
-                        if (builder.downloadStartIndex == 0L)
-                            builder.downloadStartIndex = getLocalDownloadLength(builder)
+                    when {
+                        builder.isDownloadBreakpoint -> {
+                            if (builder.downloadStartIndex == 0L)
+                                builder.downloadStartIndex = getLocalDownloadLength(builder)
 
-                        downloadBreakpoint(builder, callback)/*断点下载*/
-                    } else
-                        downloadPost(builder, callback)
+                            downloadBreakpoint(builder, callback)/*断点下载*/
+                        }
+                        builder.method == "GET" ->
+                            downloadGet(builder, callback)
+                        else ->
+                            downloadPost(builder, callback)
+                    }
                 }
 
                 is OnUploadingListener -> {/*上传*/
