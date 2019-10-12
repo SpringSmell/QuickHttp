@@ -2,11 +2,10 @@
 
 package org.quick.http
 
-import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.Context
 import android.os.Bundle
 import android.text.TextUtils
-import com.squareup.moshi.Types
 import okhttp3.*
 import org.quick.async.Async
 import org.quick.http.Utils.mediaTypeFile
@@ -29,12 +28,15 @@ import java.util.concurrent.TimeUnit
  */
 object HttpService {
 
-
     private val taskCalls = HashMap<String, Call>()
     /**
      * Cookie管理
      */
     private val localCookieJar = LocalCookieJar()
+    /**
+     * 上一次的JSON
+     */
+    private var lastJson = ""
 
     private val normalClient by lazy {
         return@lazy OkHttpClient.Builder()
@@ -75,8 +77,8 @@ object HttpService {
                 request.url.toString()
             else
                 LoggingInterceptor.parseRequest(request)
-        if (builder.activity != null)
-            key = builder.activity?.javaClass?.canonicalName + key
+        if (builder.context != null)
+            key = builder.context?.javaClass?.canonicalName + key
         return key
     }
 
@@ -222,8 +224,8 @@ object HttpService {
      * 绑定者是否生存
      */
     private fun checkBinderIsExist(builder: Builder): Boolean = when {
-        builder.activity != null ->
-            Utils.checkActivityIsRunning(builder.activity)
+        builder.context != null && builder.context is Activity ->
+            Utils.checkActivityIsRunning(builder.context as Activity)
         builder.fragment != null ->
             /*所依赖的Activity还在运行中*/
             (builder.fragment!!.activity != null && Utils.checkActivityIsRunning(builder.fragment!!.activity))
@@ -258,14 +260,23 @@ object HttpService {
         val data = checkOOM(response)
         if (checkBinderIsExist(builder)) {
             Async.runOnUiThread {
-                if (callback.tClass == String::class.java) callback.onResponse(data as T)
+                if (builder.ignoreEqualJson)
+                    if (lastJson == data) {
+                        callback.onEnd()
+                        println("已忽略相同的JSON：$data")
+                        return@runOnUiThread
+                    }
+                lastJson = data
+                if (callback.tClass == String::class.java)
+                    callback.onResponse(data as T)
                 else {
                     val model = JsonUtils.parseFromJson(
                         data,
                         callback.tClass,
                         *callback.tAgainTClzList.toTypedArray()
                     )
-                    if (model == null) Config.onRequestCallback?.onErrorParse(data)
+                    if (model == null)
+                        Config.onRequestCallback?.onErrorParse(data)
                     callback.onResponse(model)
                 }
                 callback.onEnd()
@@ -521,16 +532,24 @@ object HttpService {
     /**
      * 取消指定正在运行的任务
      */
-    fun cancelTask(tag: String?) {
-        if (TextUtils.isEmpty(tag)) return
+    fun cancelTask(tag: String?): Boolean {
+        var isCancel = false
+        if (TextUtils.isEmpty(tag))
+            return isCancel
         for (call in taskCalls) {
             if (tag == call.value.request().tag() && !call.value.isCanceled()) {
-                if (!call.value.isCanceled()) call.value.cancel()
+                if (!call.value.isCanceled()) {
+                    call.value.cancel()
+                    isCancel = true
+                }
                 taskCalls.remove(call.key)
                 break
             }
         }
+        return isCancel
     }
+
+    fun checkTask(tag: String) = taskCalls.contains(tag)
 
     /**
      * 取消指定正在运行的任务
@@ -570,9 +589,18 @@ object HttpService {
         internal var downloadEndIndex = 0L
         internal var isDownloadBreakpoint = true/*是否断点下载*/
         internal var downloadFileName: String = ""
+        internal var ignoreEqualJson = false/*忽略相同的JSON*/
 
         internal var fragment: androidx.fragment.app.Fragment? = null
-        internal var activity: Activity? = null
+        internal var context: Context? = null
+
+        /**
+         * 忽略上一次相同的JSON串
+         */
+        fun ignoreEqualJson(isIgnore: Boolean = true): Builder {
+            ignoreEqualJson = isIgnore
+            return this
+        }
 
         fun get(): Builder {
             this.method = "GET"
@@ -595,8 +623,8 @@ object HttpService {
         /**
          * 与activity生命周期绑定，若activity销毁，请求将不会返回
          */
-        fun binder(activity: Activity?): Builder {
-            this.activity = activity
+        fun binder(context: Context?): Builder {
+            this.context = context
             return this
         }
 

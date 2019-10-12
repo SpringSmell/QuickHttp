@@ -60,6 +60,7 @@ class MainActivity : AppCompatActivity() {
             /*普通请求*/
             HttpService.Builder("http://api.jiruanos.com/api/user/profile")
                 .get()
+                .ignoreEqualJson()
                 .enqueue(object : Callback<BeanJava2>() {
                     override fun onFailure(e: Throwable, isNetworkError: Boolean) {
                         e.printStackTrace()
