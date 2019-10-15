@@ -28,12 +28,12 @@ class FragmentActivity : AppCompatActivity() {
     }
 
     private fun requestData() {
-/*普通请求*/
+        /*普通请求*/
         HttpService.Builder("https://www.baidu.com/")
             .get()
             .binder(this)
             .addParams("test", "test")
-            .enqueue(object : Callback<BeanKotlin>() {
+            .enqueue(object : Callback<BeanJava<BeanKotlin>>() {
                 override fun onStart() {
                     Log.e("http", "开始执行")
                     super.onStart()
@@ -48,7 +48,7 @@ class FragmentActivity : AppCompatActivity() {
                     e.printStackTrace()
                 }
 
-                override fun onResponse(value: BeanKotlin?) {
+                override fun onResponse(value: BeanJava<BeanKotlin>?) {
                     Toast.makeText(this@FragmentActivity, "收到消息", Toast.LENGTH_LONG).show()
                 }
             })

@@ -61,14 +61,18 @@ class MainActivity : AppCompatActivity() {
             HttpService.Builder("http://api.jiruanos.com/api/user/profile")
                 .get()
                 .ignoreEqualJson()
-                .enqueue(object : Callback<BeanJava2>() {
+                .enqueue(object : BaseCallback<BeanJava<BeanJava2>>() {
+                    override fun suc(value: BeanJava<BeanJava2>) {
+                        Log.e("HttpService", "数量：")
+                    }
+
+                    override fun failed(e: Throwable, isNetworkError: Boolean) {
+                    }
+
                     override fun onFailure(e: Throwable, isNetworkError: Boolean) {
                         e.printStackTrace()
                     }
 
-                    override fun onResponse(value: BeanJava2?) {
-                        var test = ""
-                    }
                 })
         }
         tv1.setOnClickListener {
@@ -79,7 +83,8 @@ class MainActivity : AppCompatActivity() {
             //https://s.beta.myapp.com/myapp/rdmexp/exp/file2/2019/10/08/comjuzhewww_1.0.0Beta_0493c6f9-09cd-5d8f-a297-97a7cca061a2.apk
             //http://video.haodanku.com/95ec3a0a93f144790a8e777eb0c69d9d?attname=1568698684.mp4
 //            val url="https://s.beta.myapp.com/myapp/rdmexp/exp/file2/2019/10/08/comjuzhewww_1.0.0Beta_0493c6f9-09cd-5d8f-a297-97a7cca061a2.apk"
-            val url="https://download.alicdn.com/wireless/juhuasuan4android/latest/juhuasuan_701073.apk"
+            val url =
+                "https://download.alicdn.com/wireless/juhuasuan4android/latest/juhuasuan_701073.apk"
             HttpService.Builder(url)
                 .downloadBreakpoint(true)/*断点下载：不调用此方法默认为true*/
                 .get()

@@ -270,11 +270,12 @@ object HttpService {
                 if (callback.tClass == String::class.java)
                     callback.onResponse(data as T)
                 else {
-                    val model = JsonUtils.parseFromJson(
-                        data,
-                        callback.tClass,
-                        *callback.tAgainTClzList.toTypedArray()
-                    )
+                    val model =
+                        JsonUtils.parseFromJson(
+                            data,
+                            callback.tClass,
+                            *callback.tTClass.toTypedArray()
+                        )
                     if (model == null)
                         Config.onRequestCallback?.onErrorParse(data)
                     callback.onResponse(model)
