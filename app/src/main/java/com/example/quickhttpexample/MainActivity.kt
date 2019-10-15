@@ -66,13 +66,8 @@ class MainActivity : AppCompatActivity() {
                         Log.e("HttpService", "数量：")
                     }
 
-                    override fun failed(e: Throwable, isNetworkError: Boolean) {
+                    override fun failed(e: Throwable?, isNetworkError: Boolean, parse: Boolean) {
                     }
-
-                    override fun onFailure(e: Throwable, isNetworkError: Boolean) {
-                        e.printStackTrace()
-                    }
-
                 })
         }
         tv1.setOnClickListener {

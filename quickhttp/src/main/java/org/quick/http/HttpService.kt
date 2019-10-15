@@ -6,6 +6,7 @@ import android.app.Activity
 import android.content.Context
 import android.os.Bundle
 import android.text.TextUtils
+import android.util.SparseArray
 import okhttp3.*
 import org.quick.async.Async
 import org.quick.http.Utils.mediaTypeFile
@@ -36,7 +37,7 @@ object HttpService {
     /**
      * 上一次的JSON
      */
-    private var lastJson = ""
+    private var lastJsonSa = HashMap<String, String>()
 
     private val normalClient by lazy {
         return@lazy OkHttpClient.Builder()
@@ -260,13 +261,14 @@ object HttpService {
         val data = checkOOM(response)
         if (checkBinderIsExist(builder)) {
             Async.runOnUiThread {
-                if (builder.ignoreEqualJson)
-                    if (lastJson == data) {
+                if (builder.ignoreEqualJson) {
+                    if (lastJsonSa[builder.url] == data) {
                         callback.onEnd()
                         println("已忽略相同的JSON：$data")
                         return@runOnUiThread
-                    }
-                lastJson = data
+                    } else
+                        lastJsonSa[builder.url] = data
+                }
                 if (callback.tClass == String::class.java)
                     callback.onResponse(data as T)
                 else {

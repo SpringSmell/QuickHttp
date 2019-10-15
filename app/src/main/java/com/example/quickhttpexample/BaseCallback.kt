@@ -3,17 +3,29 @@ package com.example.quickhttpexample
 import com.squareup.moshi.Types
 import org.quick.http.JsonUtils
 import org.quick.http.callback.Callback
+import java.lang.ClassCastException
+import java.lang.Exception
 
 abstract class BaseCallback<M> : Callback<String>() {
 
-    private fun <M> parse(json: String): M {
+    private fun <M> parse(json: String): M? {
         val clz = tCurrentClz
         val adapter =
             if (clz.canonicalName.contains("List"))
-                JsonUtils.moshi.adapter<M>(Types.newParameterizedType(List::class.java, *tTClass.toTypedArray()))
+                JsonUtils.moshi.adapter<M>(
+                    Types.newParameterizedType(
+                        List::class.java,
+                        *tTClass.toTypedArray()
+                    )
+                )
             else
                 JsonUtils.moshi.adapter<M>(Types.newParameterizedType(clz, *tTClass.toTypedArray()))
-        return adapter.fromJson(json) as M
+        return try{
+            adapter.fromJson(json)
+        }catch (O_O:Exception){
+            failed(O_O, isNetworkError = false, parse = true)
+            null
+        }
     }
 
     override fun onResponse(value: String?) {
@@ -42,13 +54,15 @@ abstract class BaseCallback<M> : Callback<String>() {
 ////        val json = JsonUtils.parseToJson(bean)
 //        val json2="{\"code\":1,\"msg\":\"这也是消息\",\"data\":{\"code\":1,\"msg\":\"这也是消息\"}}"
 
-        suc(parse(value!!))
+        val model = parse<M>(value!!)
+        if (model != null)
+            suc(model)
     }
 
     override fun onFailure(e: Throwable, isNetworkError: Boolean) {
-        failed(e, isNetworkError)
+        failed(e, isNetworkError, false)
     }
 
     abstract fun suc(value: M)
-    abstract fun failed(e: Throwable, isNetworkError: Boolean)
+    abstract fun failed(e: Throwable?, isNetworkError: Boolean, parse: Boolean)
 }
