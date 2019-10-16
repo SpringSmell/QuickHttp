@@ -10,19 +10,14 @@ abstract class BaseCallback<M> : Callback<String>() {
 
     private fun <M> parse(json: String): M? {
         val clz = tCurrentClz
-        val adapter =
+        val type =
             if (clz.canonicalName.contains("List"))
-                JsonUtils.moshi.adapter<M>(
-                    Types.newParameterizedType(
-                        List::class.java,
-                        *tTClass.toTypedArray()
-                    )
-                )
+                Types.newParameterizedType(List::class.java, *tTClass.toTypedArray())
             else
-                JsonUtils.moshi.adapter<M>(Types.newParameterizedType(clz, *tTClass.toTypedArray()))
-        return try{
-            adapter.fromJson(json)
-        }catch (O_O:Exception){
+                Types.newParameterizedType(clz, *tTClass.toTypedArray())
+        return try {
+            JsonUtils.moshi.adapter<M>(type).fromJson(json)
+        } catch (O_O: Exception) {
             failed(O_O, isNetworkError = false, parse = true)
             null
         }
@@ -52,7 +47,7 @@ abstract class BaseCallback<M> : Callback<String>() {
 //        bean.msg = "这是消息1"
 //        bean.data =data
 ////        val json = JsonUtils.parseToJson(bean)
-//        val json2="{\"code\":1,\"msg\":\"这也是消息\",\"data\":{\"code\":1,\"msg\":\"这也是消息\"}}"
+//        val json="{\"code\":1,\"msg\":\"这也是消息\",\"data\":{\"code\":1,\"msg\":\"这也是消息\"}}"
 
         val model = parse<M>(value!!)
         if (model != null)

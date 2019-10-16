@@ -60,10 +60,9 @@ class MainActivity : AppCompatActivity() {
             /*普通请求*/
             HttpService.Builder("http://api.jiruanos.com/api/user/profile")
                 .get()
-                .ignoreEqualJson()
-                .enqueue(object : BaseCallback<BeanJava<BeanJava2>>() {
-                    override fun suc(value: BeanJava<BeanJava2>) {
-                        Log.e("HttpService", "数量：")
+                .enqueue(object : BaseCallback<ArrayList<BeanJava2>>() {
+                    override fun suc(value: ArrayList<BeanJava2>) {
+                        Log.e("HttpService", "数量：$value")
                     }
 
                     override fun failed(e: Throwable?, isNetworkError: Boolean, parse: Boolean) {
