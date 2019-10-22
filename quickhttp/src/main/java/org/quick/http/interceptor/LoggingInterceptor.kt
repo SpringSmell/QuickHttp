@@ -30,9 +30,7 @@ class LoggingInterceptor : Interceptor {
 
         Log.d("HttpService", String.format("----result     = %s", resultStr))
         Log.d(
-            "HttpService",
-            String.format("----Response---- %d ms", System.currentTimeMillis() - startTime)
-        )
+            "HttpService", String.format("----Response---- %d ms", System.currentTimeMillis() - startTime))
         Log.d("HttpService", " ")
 
         return response.newBuilder()

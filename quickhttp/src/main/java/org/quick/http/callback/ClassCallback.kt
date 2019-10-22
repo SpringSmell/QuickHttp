@@ -52,7 +52,7 @@ abstract class ClassCallback<T> {
          * 向后查找三层
          */
         fun getTClass(clz: Class<*>): Class<*> {
-            val superSuperType = getClzType(clz.superclass.superclass)
+            val superSuperType = getClzType(clz.superclass?.superclass)
             val superType = superSuperType ?: getClzType(clz.superclass)
             val type = superType ?: getClzType(clz)
             return try {
@@ -62,7 +62,9 @@ abstract class ClassCallback<T> {
             }
         }
 
-        fun getClzType(clz: Class<*>): Type? {
+        fun getClzType(clz: Class<*>?): Type? {
+            if (clz==null)
+                return null
             val type = clz.genericSuperclass as? ParameterizedType ?: return null
 
             val params = type.actualTypeArguments

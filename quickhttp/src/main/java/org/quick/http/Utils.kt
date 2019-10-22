@@ -6,6 +6,7 @@ import android.text.TextUtils
 import android.util.Log
 import com.squareup.moshi.Moshi
 import okhttp3.MediaType
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import org.quick.async.Async
 import org.quick.async.callback.OnASyncListener
@@ -14,7 +15,6 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InputStream
-import java.util.concurrent.Executors
 
 
 object Utils {
