@@ -26,11 +26,17 @@ abstract class ClassCallback<T> {
     val tTClass: ArrayList<Class<T>>
         get() = getTTClass(javaClass) as ArrayList<Class<T>>
 
+    /**
+     * 子类的泛型
+     */
     val tCurrentClz: Class<T>
         get() = getTCurrentClass(javaClass) as Class<T>
 
     companion object {
 
+        /**
+         * 获取子类的泛型
+         */
         fun getTCurrentClass(clz: Class<*>): Class<*> {
             val type = getClzType(clz)
             return try {
@@ -42,7 +48,8 @@ abstract class ClassCallback<T> {
 
 
         /**
-         * 获取泛型的类型
+         * 获取父类泛型的类型
+         * 向后查找三层
          */
         fun getTClass(clz: Class<*>): Class<*> {
             val superSuperType = getClzType(clz.superclass.superclass)
@@ -54,7 +61,6 @@ abstract class ClassCallback<T> {
                 Any::class.java
             }
         }
-
 
         fun getClzType(clz: Class<*>): Type? {
             val type = clz.genericSuperclass as? ParameterizedType ?: return null
@@ -87,30 +93,5 @@ abstract class ClassCallback<T> {
             }
             return clzArray
         }
-
-//        /**
-//         * 获取泛型中的泛型
-//         */
-//        fun getTTClass(clz: Class<*>): ArrayList<Class<*>> {
-//            val clzArray = arrayListOf<Class<*>>()
-//            val type = clz.genericSuperclass as? ParameterizedType ?: return clzArray
-//            val params = type.actualTypeArguments
-//            if (params[0] is ParameterizedType) {
-//                val pType = (params[0] as ParameterizedType).actualTypeArguments[0]
-//                when (pType) {
-//                    is Class<*> ->
-//                        pType
-//                    is WildcardType -> {
-//                        if (pType.upperBounds[0] is Class<*>)
-//
-//                    }
-//                }
-//                (params[0] as ParameterizedType).actualTypeArguments.forEach {
-//                    clzArray.add(it as Class<*>)
-//                }
-//            }
-//
-//            return clzArray
-//        }
     }
 }

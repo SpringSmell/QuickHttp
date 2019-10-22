@@ -1,7 +1,7 @@
 package com.example.quickhttpexample;
 
-public class BeanJava<T> {
-   public T data;
+public class BeanJava<M> {
+   public M data;
    public int code;
    public String msg;
 }

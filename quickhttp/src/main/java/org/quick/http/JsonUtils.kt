@@ -29,11 +29,15 @@ object JsonUtils {
      * @return
      */
     fun <T> parseFromJson(json: String, cls: Class<T>, vararg clss: Class<T>): T? = try {
-        val type =
-            if (cls.canonicalName.contains("List"))
-                Types.newParameterizedType(List::class.java, *clss)
-            else
-                Types.newParameterizedType(cls, *clss)
+        val isList = when (cls.canonicalName) {
+            "java.util.ArrayList" -> true
+            "java.util.List" -> true
+            else -> false
+        }
+        val type = if (isList)
+            Types.newParameterizedType(List::class.java, *clss)
+        else
+            Types.newParameterizedType(cls, *clss)
         moshi.adapter<T>(type).fromJson(json)
     } catch (ex: Exception) {
         ex.printStackTrace()
@@ -106,7 +110,7 @@ object JsonUtils {
      * @param obj
      * @return
      */
-    fun parseToJson(obj: Any) = try {
+    fun parseToJson(obj: Any): String = try {
         val jsonAdapter = moshi.adapter(Any::class.java)
         jsonAdapter.toJson(obj)
     } catch (ex: Exception) {

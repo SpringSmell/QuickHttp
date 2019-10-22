@@ -39,7 +39,7 @@ object HttpService {
      */
     private var lastJsonSa = HashMap<String, String>()
 
-    private val normalClient by lazy {
+    val normalClient by lazy {
         return@lazy OkHttpClient.Builder()
             .connectTimeout(Config.connectTimeout, TimeUnit.SECONDS)
             .readTimeout(Config.readTimeout, TimeUnit.SECONDS)
@@ -47,23 +47,30 @@ object HttpService {
             .retryOnConnectionFailure(Config.isRetryConnection)
             .addInterceptor(LoggingInterceptor())
             .cookieJar(localCookieJar)
+            .cache(Cache(File(Config.cachePath),Config.cacheSize))
             .followRedirects(true)
             .build()
     }
 
-    private val downloadClient by lazy {
+    val downloadClient by lazy {
         return@lazy OkHttpClient.Builder()
             .connectTimeout(Config.connectTimeout, TimeUnit.SECONDS)
+            .readTimeout(Config.readTimeout, TimeUnit.SECONDS)
+            .writeTimeout(Config.writeTimeout, TimeUnit.SECONDS)
             .retryOnConnectionFailure(Config.isRetryConnection)
+            .cache(Cache(File(Config.cachePath),Config.cacheSize))
             .followRedirects(true)
             .cookieJar(localCookieJar)
     }
 
-    private val uploadingClient by lazy {
+    val uploadingClient by lazy {
         return@lazy OkHttpClient.Builder()
             .connectTimeout(Config.connectTimeout, TimeUnit.SECONDS)
+            .readTimeout(Config.readTimeout, TimeUnit.SECONDS)
+            .writeTimeout(Config.writeTimeout, TimeUnit.SECONDS)
             .retryOnConnectionFailure(Config.isRetryConnection)
             .followRedirects(true)
+            .cache(Cache(File(Config.cachePath),Config.cacheSize))
             .cookieJar(localCookieJar)
             .addInterceptor(UploadingInterceptor())
             .build()
@@ -600,145 +607,84 @@ object HttpService {
         /**
          * 忽略上一次相同的JSON串
          */
-        fun ignoreEqualJson(isIgnore: Boolean = true): Builder {
-            ignoreEqualJson = isIgnore
-            return this
-        }
+        fun ignoreEqualJson(isIgnore: Boolean = true) = also { ignoreEqualJson = isIgnore }
 
-        fun get(): Builder {
-            this.method = "GET"
-            return this
-        }
+        fun get() = also { this.method = "GET" }
 
-        fun post(): Builder {
-            this.method = "POST"
-            return this
-        }
+        fun post() = also { this.method = "POST" }
 
         /**
          * 与fragment生命周期绑定，若fragment销毁或分离，请求将不会返回
          */
-        fun binder(fragment: androidx.fragment.app.Fragment?): Builder {
-            this.fragment = fragment
-            return this
-        }
+        fun binder(fragment: androidx.fragment.app.Fragment?) = also { this.fragment = fragment }
 
         /**
          * 与activity生命周期绑定，若activity销毁，请求将不会返回
          */
-        fun binder(context: Context?): Builder {
-            this.context = context
-            return this
-        }
+        fun binder(context: Context?) = also { this.context = context }
 
         /**
          * 添加标识，可用于取消任务
          */
-        fun tag(tag: String): Builder {
-            this.tag = tag
-            return this
-        }
+        fun tag(tag: String) = also { this.tag = tag }
 
         /**
          * 添加header
          */
-        fun addHeader(key: String, value: Any): Builder {
-            header.putString(key, value.toString())
-            return this
-        }
+        fun addHeader(key: String, value: Any) = also { header.putString(key, value.toString()) }
 
         /**
          * 添加参数
          */
-        fun addParams(bundle: Bundle): Builder {
-            requestBodyBundle.putAll(bundle)
-            return this
-        }
+        fun addParams(bundle: Bundle) = also { requestBodyBundle.putAll(bundle) }
 
-        fun addParams(map: Map<String, *>): Builder {
-            map.keys.forEach { requestBodyBundle.putString(it, map[it].toString()) }
-            return this
-        }
+        fun addParams(map: Map<String, *>) =
+            also { map.keys.forEach { requestBodyBundle.putString(it, map[it].toString()) } }
 
-        fun addParams(key: String, value: String): Builder {
-            requestBodyBundle.putString(key, value)
-            return this
-        }
+        fun addParams(key: String, value: String) = also { requestBodyBundle.putString(key, value) }
 
-        fun addParams(key: String, value: Int): Builder {
-            requestBodyBundle.putInt(key, value)
-            return this
-        }
+        fun addParams(key: String, value: Int) = also { requestBodyBundle.putInt(key, value) }
 
-        fun addParams(key: String, value: Long): Builder {
-            requestBodyBundle.putLong(key, value)
-            return this
-        }
+        fun addParams(key: String, value: Long) = also { requestBodyBundle.putLong(key, value) }
 
-        fun addParams(key: String, value: Float): Builder {
-            requestBodyBundle.putFloat(key, value)
-            return this
-        }
+        fun addParams(key: String, value: Float) = also { requestBodyBundle.putFloat(key, value) }
 
-        fun addParams(key: String, value: Double): Builder {
-            requestBodyBundle.putDouble(key, value)
-            return this
-        }
+        fun addParams(key: String, value: Double) = also { requestBodyBundle.putDouble(key, value) }
 
-        fun addParams(key: String, value: Boolean): Builder {
-            requestBodyBundle.putBoolean(key, value)
-            return this
-        }
+        fun addParams(key: String, value: Boolean) =
+            also { requestBodyBundle.putBoolean(key, value) }
 
-        fun addParams(key: String, value: Char): Builder {
-            requestBodyBundle.putChar(key, value)
-            return this
-        }
+        fun addParams(key: String, value: Char) = also { requestBodyBundle.putChar(key, value) }
 
-        fun addParams(key: String, value: CharSequence): Builder {
-            requestBodyBundle.putCharSequence(key, value)
-            return this
-        }
+        fun addParams(key: String, value: CharSequence) =
+            also { requestBodyBundle.putCharSequence(key, value) }
 
-        fun addParams(key: String, value: Byte): Builder {
-            requestBodyBundle.putByte(key, value)
-            return this
-        }
+        fun addParams(key: String, value: Byte) = also { requestBodyBundle.putByte(key, value) }
 
-        fun addParams(key: String, value: File): Builder {
-            fileBundle.putSerializable(key, value)
-            return this
-        }
+        fun addParams(key: String, value: File) = also { fileBundle.putSerializable(key, value) }
 
-        fun addParams(key: String, value: ArrayList<File>): Builder {
-            fileBundle.putSerializable(key, value)
-            return this
-        }
+        fun addParams(key: String, value: ArrayList<File>) =
+            also { fileBundle.putSerializable(key, value) }
 
-        fun downloadFileName(fileName: String): Builder {
-            this.downloadFileName = fileName
-            return this
-        }
+        fun downloadFileName(fileName: String) = also { this.downloadFileName = fileName }
 
         /**
          * 断点下载索引
          * @param startIndex 为0时：自动获取本地路径文件大小
          * @param endIndex 为0时：自动获取总大小
          */
-        fun downloadBreakpointIndex(startIndex: Long, endIndex: Long): Builder {
-            this.isDownloadBreakpoint = true
-            this.downloadStartIndex = startIndex
-            this.downloadEndIndex = endIndex
-            return this
-        }
+        fun downloadBreakpointIndex(startIndex: Long, endIndex: Long) =
+            also {
+                this.isDownloadBreakpoint = true
+                this.downloadStartIndex = startIndex
+                this.downloadEndIndex = endIndex
+            }
 
         /**
          * 断点下载
          */
-        fun downloadBreakpoint(isBreakpoint: Boolean = true): Builder {
-            this.isDownloadBreakpoint = isBreakpoint
-            return this
-        }
+        fun downloadBreakpoint(isBreakpoint: Boolean = true) =
+            also { this.isDownloadBreakpoint = isBreakpoint }
 
         /**
          * 开始执行
@@ -748,15 +694,10 @@ object HttpService {
          * 2、{@link OnUploadingListener}上传文件
          * 3、{@link Callback} 普通请求
          */
-        fun <T> enqueue(callback: org.quick.http.callback.Callback<T>): org.quick.http.callback.Call {
-            val call = build()
-            call.enqueue(callback)
-            return call
-        }
+        fun <T> enqueue(callback: org.quick.http.callback.Callback<T>) =
+            build().apply { enqueue(callback) }
 
-        fun build(): org.quick.http.callback.Call {
-            return QuickHttpProxy(this).build()
-        }
+        fun build(): org.quick.http.callback.Call = QuickHttpProxy(this).build()
     }
 
     /**
@@ -776,112 +717,74 @@ object HttpService {
         /*如果遇到连接问题，是否重试*/
         internal var isRetryConnection = true
         internal var cachePath: String = Utils.saveSDCardPath
+        internal var cacheSize = 10 * 1024 * 1024L
         /*请求之前回调*/
         internal var onRequestBeforeListener: ((builder: Builder) -> Unit)? = null
         internal var onRequestCallback: OnRequestStatusCallback? = null
 
-        fun baseUrl(url: String): Config {
-            this.baseUrl = url
-            return this
-        }
+        fun baseUrl(url: String) = also { this.baseUrl = url }
 
         /**
          * @param isGet true:GET   false:POST
          */
-        fun method(isGet: Boolean): Config {
-            defaultMethod = if (isGet) "GET" else "POST"
-            return this
-        }
+        fun method(isGet: Boolean) = also { defaultMethod = if (isGet) "GET" else "POST" }
 
         /**
          * 添加公共header
          */
-        fun addHeader(key: String, value: Any): Config {
-            header.putString(key, value.toString())
-            return this
-        }
+        fun addHeader(key: String, value: Any) = also { header.putString(key, value.toString()) }
 
-        fun removeHeader(key: String): Config {
-            header.remove(key)
-            return this
-        }
+        fun removeHeader(key: String) = also { header.remove(key) }
 
         /**
          * 添加公共参数
          */
-        fun addParams(key: String, value: Any): Config {
-            params.putString(key, value.toString())
-            return this
-        }
+        fun addParams(key: String, value: Any) = also { params.putString(key, value.toString()) }
 
-        fun removeParams(key: String): Config {
-            params.remove(key)
-            return this
-        }
+        fun removeParams(key: String) = also { params.remove(key) }
 
         /**
          * 指定编码，默认utf-8
          */
-        fun encoding(encoding: String): Config {
-            this.encoding = encoding
-            return this
-        }
+        fun encoding(encoding: String) = also { this.encoding = encoding }
 
         /**
          * 读取超时时间
          */
-        fun readTimeout(timeout: Long): Config {
-            this.readTimeout = timeout
-            return this
-        }
+        fun readTimeout(timeout: Long) = also { this.readTimeout = timeout }
 
         /**
          * 写入超时时间
          */
-        fun writeTimeout(timeout: Long): Config {
-            this.writeTimeout = timeout
-            return this
-        }
+        fun writeTimeout(timeout: Long) = also { this.writeTimeout = timeout }
 
         /**
          * 连接超时时间
          */
-        fun connectTimeout(timeout: Long): Config {
-            this.connectTimeout = timeout
-            return this
-        }
+        fun connectTimeout(timeout: Long) = also { this.connectTimeout = timeout }
 
         /**
          * 遇到连接问题，是否重试
          */
-        fun retryConnection(isRetryConnection: Boolean): Config {
-            this.isRetryConnection = isRetryConnection
-            return this
-        }
+        fun retryConnection(isRetryConnection: Boolean) =
+            also { this.isRetryConnection = isRetryConnection }
 
         /**
          * 缓存路径
          */
-        fun cachePath(dirPath: String): Config {
-            this.cachePath = dirPath
-            return this
-        }
+        fun cachePath(dirPath: String) = also { this.cachePath = dirPath }
 
         /**
          * 每次-请求之前回调
          */
-        fun onRequestBefore(listener: (builder: Builder) -> Unit): Config {
-            this.onRequestBeforeListener = listener
-            return this
-        }
+        fun onRequestBefore(listener: (builder: Builder) -> Unit) =
+            also { this.onRequestBeforeListener = listener }
 
         /**
          * 每次-请求失败异常回调
          */
-        fun onRequestStatus(onRequestCallback: OnRequestStatusCallback): Config {
-            this.onRequestCallback = onRequestCallback
-            return this
-        }
+        fun onRequestStatus(onRequestCallback: OnRequestStatusCallback) =
+            also { this.onRequestCallback = onRequestCallback }
     }
 
     internal class QuickHttpProxy(private var builder: Builder) : org.quick.http.callback.Call {
@@ -927,12 +830,8 @@ object HttpService {
             cancelTask(builder().tag)
         }
 
-        override fun builder(): Builder {
-            return builder
-        }
+        override fun builder() = builder
 
-        fun build(): org.quick.http.callback.Call {
-            return this
-        }
+        fun build() = this
     }
 }
