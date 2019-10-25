@@ -1,15 +1,16 @@
 package org.quick.http
 
 import android.app.Activity
-import android.os.*
+import android.os.Build
+import android.os.Bundle
+import android.os.Environment
 import android.text.TextUtils
 import android.util.Log
-import com.squareup.moshi.Moshi
 import okhttp3.MediaType
-import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.Request
-import okhttp3.Response
+import org.json.JSONArray
+import org.json.JSONObject
 import org.quick.async.Async
 import org.quick.async.callback.OnASyncListener
 import org.quick.http.HttpService.TAG
@@ -19,6 +20,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InputStream
+import kotlin.math.max
 
 
 object Utils {
@@ -210,6 +212,40 @@ object Utils {
         if (HttpService.Config.isDebug) {
             Log.d(TAG, log)
         }
+    }
 
+    fun getSplit(number: Int): String {
+        var split = ""
+        for (index in 0 until number) {
+            split += " "
+        }
+        return split
+    }
+
+    fun printJson(json: String) {
+        if (HttpService.Config.isDebug) {
+            val newJson = when {
+                json.startsWith("{") -> {
+                    val jo = JSONObject(json)
+                    jo.toString(4)
+                }
+                json.startsWith("[") -> {
+                    val ja = JSONArray(json)
+                    ja.toString(4)
+                }
+                else ->
+                    json
+            }
+            if (HttpService.Config.isPrintAllJson) {
+                val maxLength = 3500
+                for (index in 0 until newJson.length / maxLength) {
+                    Log.d(TAG, newJson.substring(index * maxLength, index * maxLength + maxLength))
+                    if (index == newJson.length / maxLength - 1) {
+                        Log.d(TAG, newJson.substring(index * maxLength + maxLength, newJson.length))
+                    }
+                }
+            } else
+                Log.d(TAG, newJson)
+        }
     }
 }

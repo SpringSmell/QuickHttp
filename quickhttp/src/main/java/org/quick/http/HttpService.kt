@@ -263,27 +263,29 @@ object HttpService {
         val data = checkOOM(response)
         Config.onResponseCallback?.invoke(data)
         if (checkBinderIsExist(builder)) {
-            Utils.println(String.format("----result     = %s", data))
-            Utils.println(" ")
-            Utils.println(" ")
             Async.runOnUiThread {
                 if (builder.ignoreEqualJson) {
                     if (lastJsonSa[builder.url] == data) {
                         callback.onEnd()
-                        println("已忽略相同的JSON：$data")
+                        Utils.println("已忽略相同的JSON：$data")
                         return@runOnUiThread
                     } else
                         lastJsonSa[builder.url] = data
                 }
-                if (callback.tClass == String::class.java)
-                    callback.onResponse(data as T)
-                else {
-                    callback.onResponse(JsonUtils.parseFromJson(data, callback.tClass, *callback.tTClass.toTypedArray()))
-                }
+
+                val model: T? =
+                    if (callback.tClass == String::class.java)
+                        data as T
+                    else {
+                        JsonUtils.parseFromJson(data, callback.tClass, *callback.tTClass.toTypedArray())
+                    }
+                val result = if (model != null) JsonUtils.parseToJson(model) else data
+                Utils.printJson(result)
+                callback.onResponse(model)
                 callback.onEnd()
             }
         } else if (Config.isDebug)
-            println("所依赖的绑定者已销毁")
+            Utils.println("所依赖的绑定者已销毁")
     }
 
     /**
@@ -711,7 +713,9 @@ object HttpService {
          * 是否调试
          */
         internal var isDebug = false
+        internal var isPrintAllJson = false
 
+        fun printAllJson(isAll: Boolean) = also { this.isPrintAllJson = isAll }
         fun debug(isDebug: Boolean = true) = also { this.isDebug = isDebug }
 
         fun baseUrl(url: String) = also { this.baseUrl = url }
