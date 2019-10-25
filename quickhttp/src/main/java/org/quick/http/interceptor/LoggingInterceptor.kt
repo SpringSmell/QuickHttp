@@ -1,6 +1,5 @@
 package org.quick.http.interceptor
 
-import android.util.Log
 import okhttp3.*
 import org.quick.http.Utils
 
@@ -11,38 +10,16 @@ class LoggingInterceptor : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
         val startTime = System.currentTimeMillis()
-
         val response = chain.proceed(request)
-
-        Log.d("HttpService", " ")
-        Log.d("HttpService", String.format("----Request %s---", request.method))
-        Log.d("HttpService", "----url        = " + request.url.toString())
-        Log.d("HttpService", "----header     = " + parseHeader(request.headers))
-
-        val resultStr = try {
-            String(response.body!!.bytes())
-        } catch (O_O: OutOfMemoryError) {
-            "内存溢出"
-        }
-
-        if (request.method == "POST")
-            Log.d("HttpService", String.format("----params     = %s", parseRequest(request)))
-
-        Log.d("HttpService", String.format("----result     = %s", resultStr))
-        Log.d(
-            "HttpService", String.format("----Response---- %d ms", System.currentTimeMillis() - startTime))
-        Log.d("HttpService", " ")
-
-        return response.newBuilder()
-            .body(ResponseBody.create(Utils.mediaTypeJson, resultStr))
-            .build()
+        Utils.println(request)
+        Utils.println(String.format("----Response---- %d ms", System.currentTimeMillis() - startTime))
+        return response
     }
 
     companion object {
         fun parseRequest(request: Request): String {
             var params = ""
-            val requestBody = request.body
-            when (requestBody) {
+            when (val requestBody = request.body) {
                 is FormBody -> {
                     params += parseFormBody(requestBody)
                 }

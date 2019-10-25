@@ -8,9 +8,13 @@ import com.squareup.moshi.Moshi
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.Request
+import okhttp3.Response
 import org.quick.async.Async
 import org.quick.async.callback.OnASyncListener
+import org.quick.http.HttpService.TAG
 import org.quick.http.callback.OnWriteListener
+import org.quick.http.interceptor.LoggingInterceptor
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -123,7 +127,7 @@ object Utils {
                 override fun onASync(): File {
                     val dir = File(filePathDir)
                     if (!dir.exists())
-                        dir.mkdirs()
+                        dir.mkdir()
                     val filePath = filePathDir + File.separatorChar + fileName
                     val file = File(filePath)
 
@@ -187,5 +191,25 @@ object Utils {
         } else {
             throw NullPointerException()
         }
+    }
+
+    fun println(request: Request) {
+        if (HttpService.Config.isDebug) {
+            println(" ")
+            println(" ")
+            println(String.format("----Request %s  ---", request.method))
+            println("----url        = " + request.url.toString())
+            println("----header     = " + LoggingInterceptor.parseHeader(request.headers))
+
+            if (request.method == "POST")
+                println(String.format("----params     = %s", LoggingInterceptor.parseRequest(request)))
+        }
+    }
+
+    fun println(log: String) {
+        if (HttpService.Config.isDebug) {
+            Log.d(TAG, log)
+        }
+
     }
 }

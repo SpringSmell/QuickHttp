@@ -6,12 +6,11 @@ import android.app.Activity
 import android.content.Context
 import android.os.Bundle
 import android.text.TextUtils
-import android.util.SparseArray
+import androidx.fragment.app.Fragment
 import okhttp3.*
 import org.quick.async.Async
 import org.quick.http.Utils.mediaTypeFile
 import org.quick.http.callback.OnDownloadListener
-import org.quick.http.callback.OnRequestStatusCallback
 import org.quick.http.callback.OnUploadingListener
 import org.quick.http.callback.OnWriteListener
 import org.quick.http.interceptor.DownloadInterceptor
@@ -28,7 +27,7 @@ import java.util.concurrent.TimeUnit
  * @from https://github.com/SpringSmell/HttpService
  */
 object HttpService {
-
+    const val TAG = "HttpService"
     private val taskCalls = HashMap<String, Call>()
     /**
      * Cookie管理
@@ -39,39 +38,28 @@ object HttpService {
      */
     private var lastJsonSa = HashMap<String, String>()
 
-    val normalClient by lazy {
+    private val clientBuilder by lazy {
         return@lazy OkHttpClient.Builder()
             .connectTimeout(Config.connectTimeout, TimeUnit.SECONDS)
             .readTimeout(Config.readTimeout, TimeUnit.SECONDS)
             .writeTimeout(Config.writeTimeout, TimeUnit.SECONDS)
             .retryOnConnectionFailure(Config.isRetryConnection)
-            .addInterceptor(LoggingInterceptor())
             .cookieJar(localCookieJar)
-            .cache(Cache(File(Config.cachePath),Config.cacheSize))
+            .cache(Cache(File(Config.cachePath), Config.cacheSize))
             .followRedirects(true)
+    }
+    val normalClient by lazy {
+        clientBuilder
+            .addInterceptor(LoggingInterceptor())
             .build()
     }
 
     val downloadClient by lazy {
-        return@lazy OkHttpClient.Builder()
-            .connectTimeout(Config.connectTimeout, TimeUnit.SECONDS)
-            .readTimeout(Config.readTimeout, TimeUnit.SECONDS)
-            .writeTimeout(Config.writeTimeout, TimeUnit.SECONDS)
-            .retryOnConnectionFailure(Config.isRetryConnection)
-            .cache(Cache(File(Config.cachePath),Config.cacheSize))
-            .followRedirects(true)
-            .cookieJar(localCookieJar)
+        clientBuilder.build()
     }
 
     val uploadingClient by lazy {
-        return@lazy OkHttpClient.Builder()
-            .connectTimeout(Config.connectTimeout, TimeUnit.SECONDS)
-            .readTimeout(Config.readTimeout, TimeUnit.SECONDS)
-            .writeTimeout(Config.writeTimeout, TimeUnit.SECONDS)
-            .retryOnConnectionFailure(Config.isRetryConnection)
-            .followRedirects(true)
-            .cache(Cache(File(Config.cachePath),Config.cacheSize))
-            .cookieJar(localCookieJar)
+        clientBuilder
             .addInterceptor(UploadingInterceptor())
             .build()
     }
@@ -85,8 +73,14 @@ object HttpService {
                 request.url.toString()
             else
                 LoggingInterceptor.parseRequest(request)
-        if (builder.context != null)
-            key = builder.context?.javaClass?.canonicalName + key
+
+        builder.context?.run {
+            key = javaClass.simpleName + key
+        }
+
+        builder.fragment?.run {
+            key = javaClass.simpleName + key
+        }
         return key
     }
 
@@ -239,7 +233,8 @@ object HttpService {
             (builder.fragment!!.activity != null && Utils.checkActivityIsRunning(builder.fragment!!.activity))
                     &&
                     (builder.fragment!!.isAdded && !builder.fragment!!.isDetached)/*已经添加到Activity中，并且没有被分离出来*/
-        else -> true
+        else ->
+            true
     }
 
     private fun <T> onFailure(
@@ -252,7 +247,7 @@ object HttpService {
         if (checkBinderIsExist(builder)) {
             Async.runOnUiThread {
                 callback.onFailure(e, e.javaClass == ConnectException::class.java)
-                Config.onRequestCallback?.onFailure(e, e.javaClass == ConnectException::class.java)
+                Config.onFailedCallback?.invoke(e, e.javaClass == ConnectException::class.java)
                 callback.onEnd()
             }
         }
@@ -266,7 +261,11 @@ object HttpService {
     ) {
         removeTask(builder, call.request())
         val data = checkOOM(response)
+        Config.onResponseCallback?.invoke(data)
         if (checkBinderIsExist(builder)) {
+            Utils.println(String.format("----result     = %s", data))
+            Utils.println(" ")
+            Utils.println(" ")
             Async.runOnUiThread {
                 if (builder.ignoreEqualJson) {
                     if (lastJsonSa[builder.url] == data) {
@@ -279,19 +278,12 @@ object HttpService {
                 if (callback.tClass == String::class.java)
                     callback.onResponse(data as T)
                 else {
-                    val model =
-                        JsonUtils.parseFromJson(
-                            data,
-                            callback.tClass,
-                            *callback.tTClass.toTypedArray()
-                        )
-                    if (model == null)
-                        Config.onRequestCallback?.onErrorParse(data)
-                    callback.onResponse(model)
+                    callback.onResponse(JsonUtils.parseFromJson(data, callback.tClass, *callback.tTClass.toTypedArray()))
                 }
                 callback.onEnd()
             }
-        }
+        } else if (Config.isDebug)
+            println("所依赖的绑定者已销毁")
     }
 
     /**
@@ -302,15 +294,16 @@ object HttpService {
         val request = getRequest(builder).build()
 
         callback.onStart()
-        getCall(normalClient, request, builder).enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) {
-                onFailure(call, e, builder, callback)
-            }
+        getCall(normalClient, request, builder)
+            .enqueue(object : Callback {
+                override fun onFailure(call: Call, e: IOException) {
+                    onFailure(call, e, builder, callback)
+                }
 
-            override fun onResponse(call: Call, response: Response) {
-                onResponse(call, response, builder, callback)
-            }
-        })
+                override fun onResponse(call: Call, response: Response) {
+                    onResponse(call, response, builder, callback)
+                }
+            })
 
     }
 
@@ -352,26 +345,20 @@ object HttpService {
             when (val obj = builder.fileBundle.getSerializable(it)) {
                 is File ->
                     if (obj.exists())
-                        multipartBody.addFormDataPart(
-                            it,
-                            obj.name,
-                            UploadingRequestBody(mediaTypeFile!!, it, obj, callback)
-                        )
+                        multipartBody.addFormDataPart(it, obj.name, UploadingRequestBody(mediaTypeFile!!, it, obj, callback))
                 is ArrayList<*> -> {
                     obj.forEach { temp ->
                         val file = temp as File
                         if (file.exists())
-                            multipartBody.addFormDataPart(
-                                it,
-                                file.name,
-                                UploadingRequestBody(Utils.mediaTypeFile!!, it, file, callback)
-                            )
+                            multipartBody.addFormDataPart(it, file.name, UploadingRequestBody(Utils.mediaTypeFile!!, it, file, callback))
                     }
                 }
             }
         }
 
-        val request = Request.Builder().url(configUrl(builder.url)).tag(builder.tag)
+        val request = Request.Builder()
+            .url(configUrl(builder.url))
+            .tag(builder.tag)
             .post(multipartBody.build())
         builder.header.keySet().forEach { request.addHeader(it, builder.header.get(it).toString()) }
         Config.header.keySet().forEach { request.addHeader(it, Config.header.get(it).toString()) }
@@ -395,16 +382,7 @@ object HttpService {
         if (!builder.isDownloadBreakpoint)/*在断点下载的方法里已经调用了onStart方法，此时忽略*/
             onDownloadListener.onStart()
         val request = getRequest(builder).build()
-        getCall(
-            downloadClient.addNetworkInterceptor(
-                DownloadInterceptor(
-                    builder,
-                    onDownloadListener
-                )
-            ).build(),
-            request,
-            builder
-        )
+        getCall(clientBuilder.addNetworkInterceptor(DownloadInterceptor(builder, onDownloadListener)).build(), request, builder)
             .enqueue(object : Callback {
                 override fun onFailure(call: Call, e: IOException) {
                     onFailure(call, e, builder, onDownloadListener)
@@ -423,16 +401,7 @@ object HttpService {
         if (!builder.isDownloadBreakpoint)/*在断点下载的方法里已经调用了onStart方法*/
             onDownloadListener.onStart()
         val request = postRequest(builder).build()
-        getCall(
-            downloadClient.addNetworkInterceptor(
-                DownloadInterceptor(
-                    builder,
-                    onDownloadListener
-                )
-            ).build(),
-            request,
-            builder
-        )
+        getCall(clientBuilder.addNetworkInterceptor(DownloadInterceptor(builder, onDownloadListener)).build(), request, builder)
             .enqueue(object : Callback {
                 override fun onFailure(call: Call, e: IOException) {
                     onFailure(call, e, builder, onDownloadListener)
@@ -503,7 +472,6 @@ object HttpService {
         when {
             builder.downloadEndIndex == 0L ->/*没有指定下载结束*/ {
                 downloadClient
-                    .build()
                     .newCall(
                         if (builder.method == "GET")
                             getRequest(builder).build()
@@ -546,6 +514,7 @@ object HttpService {
         var isCancel = false
         if (TextUtils.isEmpty(tag))
             return isCancel
+
         for (call in taskCalls) {
             if (tag == call.value.request().tag() && !call.value.isCanceled()) {
                 if (!call.value.isCanceled()) {
@@ -565,13 +534,28 @@ object HttpService {
      * 取消指定正在运行的任务
      */
     fun cancelTask(activity: Activity?) {
-        if (activity != null)
+        activity?.run {
             for (call in taskCalls) {
-                if (call.key.startsWith(activity.javaClass.canonicalName!!)) {
-                    if (!call.value.isCanceled()) call.value.cancel()
+                if (call.key.startsWith(javaClass.simpleName)) {
+                    if (!call.value.isCanceled())
+                        call.value.cancel()
                 }
             }
+        }
+    }
 
+    /**
+     * 取消指定正在运行的任务
+     */
+    fun cancelTask(fragment: Fragment?) {
+        fragment?.run {
+            for (call in taskCalls) {
+                if (call.key.startsWith(javaClass.simpleName)) {
+                    if (!call.value.isCanceled())
+                        call.value.cancel()
+                }
+            }
+        }
     }
 
     /**
@@ -720,7 +704,15 @@ object HttpService {
         internal var cacheSize = 10 * 1024 * 1024L
         /*请求之前回调*/
         internal var onRequestBeforeListener: ((builder: Builder) -> Unit)? = null
-        internal var onRequestCallback: OnRequestStatusCallback? = null
+        internal var onFailedCallback: ((e: IOException, isNetError: Boolean) -> Unit)? = null
+        internal var onResponseCallback: ((data: String) -> Unit)? = null
+
+        /**
+         * 是否调试
+         */
+        internal var isDebug = false
+
+        fun debug(isDebug: Boolean = true) = also { this.isDebug = isDebug }
 
         fun baseUrl(url: String) = also { this.baseUrl = url }
 
@@ -766,8 +758,7 @@ object HttpService {
         /**
          * 遇到连接问题，是否重试
          */
-        fun retryConnection(isRetryConnection: Boolean) =
-            also { this.isRetryConnection = isRetryConnection }
+        fun retryConnection(isRetryConnection: Boolean) = also { this.isRetryConnection = isRetryConnection }
 
         /**
          * 缓存路径
@@ -777,14 +768,11 @@ object HttpService {
         /**
          * 每次-请求之前回调
          */
-        fun onRequestBefore(listener: (builder: Builder) -> Unit) =
-            also { this.onRequestBeforeListener = listener }
+        fun onRequestBefore(listener: (builder: Builder) -> Unit) = also { this.onRequestBeforeListener = listener }
 
-        /**
-         * 每次-请求失败异常回调
-         */
-        fun onRequestStatus(onRequestCallback: OnRequestStatusCallback) =
-            also { this.onRequestCallback = onRequestCallback }
+        fun onFailedCallback(onFailedCallback: (e: IOException, isNetError: Boolean) -> Unit) = also { this.onFailedCallback = onFailedCallback }
+
+        fun onResponseCallback(onResponseCallback: (data: String) -> Unit) = also { this.onResponseCallback = onResponseCallback }
     }
 
     internal class QuickHttpProxy(private var builder: Builder) : org.quick.http.callback.Call {

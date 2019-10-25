@@ -19,11 +19,7 @@ class FragmentActivity : AppCompatActivity() {
         setContentView(R.layout.activity_fragment)
 
         action.setOnClickListener {
-            Handler().postDelayed(
-                {
-                    requestData()
-                }, 5000
-            )
+            requestData()
         }
     }
 

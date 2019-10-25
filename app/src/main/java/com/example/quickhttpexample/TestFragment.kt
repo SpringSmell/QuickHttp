@@ -25,11 +25,7 @@ class TestFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         action.setOnClickListener {
-            Handler().postDelayed(
-                {
-                    requestData()
-                }, 5000
-            )
+            requestData()
         }
     }
 

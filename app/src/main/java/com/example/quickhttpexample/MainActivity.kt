@@ -9,10 +9,8 @@ import com.example.quickhttpexample.model.BrandListModel
 import kotlinx.android.synthetic.main.activity_main.*
 import org.quick.http.HttpService
 import org.quick.http.JsonUtils
-import org.quick.http.Utils
-import org.quick.http.callback.Callback
 import org.quick.http.callback.OnDownloadListener
-import org.quick.http.callback.OnRequestStatusCallback
+import org.quick.http.callback.OnRequestCallback
 import org.quick.http.callback.OnUploadingListener
 import java.io.File
 
@@ -35,6 +33,7 @@ class MainActivity : AppCompatActivity() {
 
     fun config() {
         HttpService.Config
+            .debug()
             .baseUrl("https://www.baseurl.com")/*默认为空*/
             .addParams("TOKEN", "token")/*公共参数*/
             .method(true)/*默认为GET请求*/
@@ -45,16 +44,12 @@ class MainActivity : AppCompatActivity() {
             .onRequestBefore {
                 it.addHeader("header2", "header1").addParams("test324", "123213")
             }
-            .onRequestStatus(object : OnRequestStatusCallback {
-                override fun onFailure(e: Throwable, isNetworkError: Boolean) {
-
-                }
-
-                override fun onErrorParse(data: String) {
-
-                }
-
-            })
+            .onResponseCallback {
+                Log.e("test", "全局响应 : $it")
+            }
+            .onFailedCallback { e, isNetError ->
+                Log.e("test", "全局失败")
+            }
     }
 
     fun onInit() {
@@ -88,7 +83,7 @@ class MainActivity : AppCompatActivity() {
 
             if (it.tag.toString().toBoolean()) {
                 HttpService.cancelTask(url)
-                it.tag=false
+                it.tag = false
                 Toast.makeText(this, "已取消", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
