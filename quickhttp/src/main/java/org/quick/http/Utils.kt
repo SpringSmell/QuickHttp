@@ -224,17 +224,11 @@ object Utils {
 
     fun printJson(json: String) {
         if (HttpService.Config.isDebug) {
-            val newJson = when {
-                json.startsWith("{") -> {
-                    val jo = JSONObject(json)
-                    jo.toString(4)
-                }
-                json.startsWith("[") -> {
-                    val ja = JSONArray(json)
-                    ja.toString(4)
-                }
-                else ->
-                    json
+            val newJson = try {
+                val jo = JSONObject(json)
+                jo.toString(4)
+            }catch (O_O:java.lang.Exception){
+                json
             }
             if (HttpService.Config.isPrintAllJson) {
                 val maxLength = 3500
