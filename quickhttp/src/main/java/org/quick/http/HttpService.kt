@@ -427,7 +427,7 @@ object HttpService {
         if (checkBinderIsExist(builder))
             Utils.writeFile(
                 response.body?.byteStream(),
-                Config.cachePath,
+                builder.downloadDir,
                 builder.downloadFileName,
                 builder.isDownloadBreakpoint,
                 object : OnWriteListener {
@@ -460,9 +460,7 @@ object HttpService {
      * 获取本地文件的总长度
      */
     private fun getLocalDownloadLength(builder: Builder): Long {
-        val file = File(
-            Config.cachePath + File.separatorChar + builder.downloadFileName
-        )
+        val file = File(builder.downloadDir + File.separatorChar + builder.downloadFileName)
         return if (file.exists()) file.length() else 0
     }
 
@@ -490,7 +488,7 @@ object HttpService {
                             when {
                                 builder.downloadEndIndex == builder.downloadStartIndex -> /*本地与线上一致*/
                                     Async.runOnUiThread {
-                                        onDownloadListener.onResponse(File(Config.cachePath + File.separatorChar + builder.downloadFileName))
+                                        onDownloadListener.onResponse(File(builder.downloadDir + File.separatorChar + builder.downloadFileName))
                                         onDownloadListener.onEnd()
                                     }
                                 builder.method == "GET" ->
@@ -584,12 +582,12 @@ object HttpService {
         internal var downloadStartIndex = 0L
         internal var downloadEndIndex = 0L
         internal var isDownloadBreakpoint = true/*是否断点下载*/
+        internal var downloadDir: String = ""
         internal var downloadFileName: String = ""
         internal var ignoreEqualJson = false/*忽略相同的JSON*/
 
-        internal var fragment: androidx.fragment.app.Fragment? = null
+        internal var fragment: Fragment? = null
         internal var context: Context? = null
-
         /**
          * 忽略上一次相同的JSON串
          */
@@ -652,6 +650,7 @@ object HttpService {
         fun addParams(key: String, value: ArrayList<File>) =
             also { fileBundle.putSerializable(key, value) }
 
+        fun downloadDir(dirPath: String) = also { this.downloadDir = dirPath }
         fun downloadFileName(fileName: String) = also { this.downloadFileName = fileName }
 
         /**
@@ -788,20 +787,29 @@ object HttpService {
             Config.onRequestBeforeListener?.invoke(builder)
             when (callback) {
                 is OnDownloadListener -> {/*下载*/
-                    if (builder.downloadFileName == "")
-                        builder.downloadFileName = Utils.getFileName(configUrl(builder.url))
+                    builder.run {
+                        if (TextUtils.isEmpty(builder.downloadFileName))
+                            builder.downloadFileName = Utils.getFileName(configUrl(builder.url))
 
-                    when {
-                        builder.isDownloadBreakpoint -> {
-                            if (builder.downloadStartIndex == 0L)
-                                builder.downloadStartIndex = getLocalDownloadLength(builder)
-
-                            downloadBreakpoint(builder, callback)/*断点下载*/
+                        if (TextUtils.isEmpty(builder.downloadDir)) {/*目录不存在，提前创建*/
+                            builder.downloadDir = Config.cachePath
+                            val file = File(downloadDir)
+                            if (!file.exists())
+                                file.mkdir()
                         }
-                        builder.method == "GET" ->
-                            downloadGet(builder, callback)
-                        else ->
-                            downloadPost(builder, callback)
+
+                        when {
+                            builder.isDownloadBreakpoint -> {
+                                if (builder.downloadStartIndex == 0L)
+                                    builder.downloadStartIndex = getLocalDownloadLength(builder)
+
+                                downloadBreakpoint(builder, callback)/*断点下载*/
+                            }
+                            builder.method == "GET" ->
+                                downloadGet(builder, callback)
+                            else ->
+                                downloadPost(builder, callback)
+                        }
                     }
                 }
 

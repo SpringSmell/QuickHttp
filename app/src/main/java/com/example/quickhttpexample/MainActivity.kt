@@ -83,7 +83,6 @@ class MainActivity : AppCompatActivity() {
             val url =
                 "https://dldir1.qq.com/weixin/android/weixin673android1360.apk"
 
-
             if (it.tag.toString().toBoolean()) {
                 HttpService.cancelTask(url)
                 it.tag = false
