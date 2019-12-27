@@ -104,35 +104,6 @@ object HttpService {
      * 根据参数获取requestBody
      */
     private fun getRequestBody(builder: Builder): RequestBody {
-//        return when {
-//            builder.fileBundle.size() > 0 -> {/*表单与多个文件*/
-//                val multipartBody = MultipartBody.Builder().setType(MultipartBody.MIXED)
-//                builder.requestBodyBundle.keySet().forEach {
-//                    multipartBody.addFormDataPart(it, builder.requestBodyBundle.get(it).toString())
-//                }
-//                builder.fileBundle.keySet().forEach {
-//                    val file = builder.fileBundle.getSerializable(it) as File
-//                    if (file.exists())
-//                        multipartBody.addFormDataPart(it, file.name, RequestBody.create(mediaTypeFile, file))
-//                }
-//
-//                Config.params.keySet().forEach {
-//                    multipartBody.addFormDataPart(it, Config.params.get(it).toString())
-//                }
-//                multipartBody.build()
-//            }
-//            else -> {/*只有表单*/
-//                val formBody = FormBody.Builder()
-//                builder.requestBodyBundle.keySet().forEach {
-//                    formBody.add(it, builder.requestBodyBundle.get(it).toString())
-//                }
-//                Config.params.keySet().forEach {
-//                    formBody.add(it, Config.params.get(it).toString())
-//                }
-//                formBody.build()
-//            }
-//        }
-        /*表单上传*/
         return run {
             val formBody = FormBody.Builder()
             builder.requestBodyBundle.keySet().forEach {
@@ -173,10 +144,7 @@ object HttpService {
         Config.header.keySet().forEach { request.addHeader(it, Config.header.get(it).toString()) }
 
         if (builder.isDownloadBreakpoint && builder.downloadEndIndex != 0L)
-            request.addHeader(
-                "RANGE",
-                String.format("bytes=%d-%d", builder.downloadStartIndex, builder.downloadEndIndex)
-            )
+            request.addHeader("RANGE", String.format("bytes=%d-%d", builder.downloadStartIndex, builder.downloadEndIndex))
 
         return request
     }
@@ -193,11 +161,7 @@ object HttpService {
         builder.header.keySet().forEach { request.addHeader(it, builder.header.get(it).toString()) }
         Config.header.keySet().forEach { request.addHeader(it, Config.header.get(it).toString()) }
         if (builder.isDownloadBreakpoint && builder.downloadEndIndex != 0L)
-            request.addHeader(
-                "RANGE",
-                String.format("bytes=%d-%d", builder.downloadStartIndex, builder.downloadEndIndex)
-            )
-
+            request.addHeader("RANGE", String.format("bytes=%d-%d", builder.downloadStartIndex, builder.downloadEndIndex))
         return request
     }
 
@@ -237,12 +201,7 @@ object HttpService {
             true
     }
 
-    private fun <T> onFailure(
-        call: Call,
-        e: IOException,
-        builder: Builder,
-        callback: org.quick.http.callback.Callback<T>
-    ) {
+    private fun <T> onFailure(call: Call, e: IOException, builder: Builder, callback: org.quick.http.callback.Callback<T>) {
         removeTask(builder, call.request())
         if (checkBinderIsExist(builder)) {
             Async.runOnUiThread {
@@ -253,12 +212,7 @@ object HttpService {
         }
     }
 
-    private fun <T> onResponse(
-        call: Call,
-        response: Response,
-        builder: Builder,
-        callback: org.quick.http.callback.Callback<T>
-    ) {
+    private fun <T> onResponse(call: Call, response: Response, builder: Builder, callback: org.quick.http.callback.Callback<T>) {
         removeTask(builder, call.request())
         val data = checkOOM(response)
         Config.onResponseCallback?.invoke(data)
@@ -418,12 +372,7 @@ object HttpService {
     /**
      * 写入
      */
-    private fun writeDownload(
-        call: Call,
-        response: Response,
-        builder: Builder,
-        onDownloadListener: OnDownloadListener
-    ) {
+    private fun writeDownload(call: Call, response: Response, builder: Builder, onDownloadListener: OnDownloadListener) {
         if (checkBinderIsExist(builder))
             Utils.writeFile(
                 response.body?.byteStream(),
@@ -573,9 +522,10 @@ object HttpService {
      * 构造器
      */
     class Builder(internal val url: String) {
-        internal val requestBodyBundle = Bundle()
-        internal val fileBundle = Bundle()
-        internal val header = Bundle()
+
+        val requestBodyBundle = Bundle()
+        val fileBundle = Bundle()
+        val header = Bundle()
 
         internal var method: String = Config.defaultMethod
         internal var tag: String? = null
@@ -588,70 +538,96 @@ object HttpService {
 
         internal var fragment: Fragment? = null
         internal var context: Context? = null
+
+        fun get() =
+            also { this.method = "GET" }
+
+        fun post() =
+            also { this.method = "POST" }
+
         /**
          * 忽略上一次相同的JSON串
          */
-        fun ignoreEqualJson(isIgnore: Boolean = true) = also { ignoreEqualJson = isIgnore }
-
-        fun get() = also { this.method = "GET" }
-
-        fun post() = also { this.method = "POST" }
+        fun ignoreEqualJson(isIgnore: Boolean = true) =
+            also { ignoreEqualJson = isIgnore }
 
         /**
          * 与fragment生命周期绑定，若fragment销毁或分离，请求将不会返回
          */
-        fun binder(fragment: androidx.fragment.app.Fragment?) = also { this.fragment = fragment }
+        fun binder(fragment: androidx.fragment.app.Fragment?) =
+            also { this.fragment = fragment }
 
         /**
          * 与activity生命周期绑定，若activity销毁，请求将不会返回
          */
-        fun binder(context: Context?) = also { this.context = context }
+        fun binder(context: Context?) =
+            also { this.context = context }
 
         /**
          * 添加标识，可用于取消任务
          */
-        fun tag(tag: String) = also { this.tag = tag }
+        fun tag(tag: String) =
+            also { this.tag = tag }
 
         /**
          * 添加header
          */
-        fun addHeader(key: String, value: Any) = also { header.putString(key, value.toString()) }
+        fun addHeader(key: String, value: Any) =
+            also { header.putString(key, value.toString()) }
+
+        fun container(key: String) = requestBodyBundle.containsKey(key)
+
+        fun getBodyValue(key: String) = requestBodyBundle.get(key)
+
+        fun getHeaderValue(key: String) = header.get(key)
 
         /**
          * 添加参数
          */
-        fun addParams(bundle: Bundle) = also { requestBodyBundle.putAll(bundle) }
+        fun addParams(bundle: Bundle) =
+            also { requestBodyBundle.putAll(bundle) }
 
         fun addParams(map: Map<String, *>) =
             also { map.keys.forEach { requestBodyBundle.putString(it, map[it].toString()) } }
 
-        fun addParams(key: String, value: String) = also { requestBodyBundle.putString(key, value) }
+        fun addParams(key: String, value: String) =
+            also { requestBodyBundle.putString(key, value) }
 
-        fun addParams(key: String, value: Int) = also { requestBodyBundle.putInt(key, value) }
+        fun addParams(key: String, value: Int) =
+            also { requestBodyBundle.putInt(key, value) }
 
-        fun addParams(key: String, value: Long) = also { requestBodyBundle.putLong(key, value) }
+        fun addParams(key: String, value: Long) =
+            also { requestBodyBundle.putLong(key, value) }
 
-        fun addParams(key: String, value: Float) = also { requestBodyBundle.putFloat(key, value) }
+        fun addParams(key: String, value: Float) =
+            also { requestBodyBundle.putFloat(key, value) }
 
-        fun addParams(key: String, value: Double) = also { requestBodyBundle.putDouble(key, value) }
+        fun addParams(key: String, value: Double) =
+            also { requestBodyBundle.putDouble(key, value) }
 
         fun addParams(key: String, value: Boolean) =
             also { requestBodyBundle.putBoolean(key, value) }
 
-        fun addParams(key: String, value: Char) = also { requestBodyBundle.putChar(key, value) }
+        fun addParams(key: String, value: Char) =
+            also { requestBodyBundle.putChar(key, value) }
 
         fun addParams(key: String, value: CharSequence) =
             also { requestBodyBundle.putCharSequence(key, value) }
 
-        fun addParams(key: String, value: Byte) = also { requestBodyBundle.putByte(key, value) }
+        fun addParams(key: String, value: Byte) =
+            also { requestBodyBundle.putByte(key, value) }
 
-        fun addParams(key: String, value: File) = also { fileBundle.putSerializable(key, value) }
+        fun addParams(key: String, value: File) =
+            also { fileBundle.putSerializable(key, value) }
 
         fun addParams(key: String, value: ArrayList<File>) =
             also { fileBundle.putSerializable(key, value) }
 
-        fun downloadDir(dirPath: String) = also { this.downloadDir = dirPath }
-        fun downloadFileName(fileName: String) = also { this.downloadFileName = fileName }
+        fun downloadDir(dirPath: String) =
+            also { this.downloadDir = dirPath }
+
+        fun downloadFileName(fileName: String) =
+            also { this.downloadFileName = fileName }
 
         /**
          * 断点下载索引

@@ -81,7 +81,7 @@ class MainActivity : AppCompatActivity() {
             //http://video.haodanku.com/95ec3a0a93f144790a8e777eb0c69d9d?attname=1568698684.mp4
 //            val url="https://s.beta.myapp.com/myapp/rdmexp/exp/file2/2019/10/08/comjuzhewww_1.0.0Beta_0493c6f9-09cd-5d8f-a297-97a7cca061a2.apk"
             val url =
-                "https://dldir1.qq.com/weixin/android/weixin673android1360.apk"
+                "https://s.beta.myapp.com/myapp/rdmexp/exp/file2/2019/11/27/comjuzhewww_1.1.5_31a81b9c-303e-599a-a94c-6228df3dcf00.apk"
 
             if (it.tag.toString().toBoolean()) {
                 HttpService.cancelTask(url)
@@ -105,7 +105,8 @@ class MainActivity : AppCompatActivity() {
                         totalCount: Long,
                         isDone: Boolean
                     ) {
-                        tv1.text = String.format("下载文件[%s]：%d/%d", key, bytesRead, totalCount)
+
+                        tv1.text = String.format("下载文件：%d/%d", bytesRead, totalCount)
                     }
 
                     override fun onFailure(e: Throwable, isNetworkError: Boolean) {
