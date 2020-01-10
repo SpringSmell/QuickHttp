@@ -109,9 +109,10 @@ object HttpService {
             builder.requestBodyBundle.keySet().forEach {
                 formBody.add(it, builder.requestBodyBundle.get(it).toString())
             }
-            Config.params.keySet().forEach {
-                formBody.add(it, Config.params.get(it).toString())
-            }
+            if (builder.isSendPublicKey)
+                Config.params.keySet().forEach {
+                    formBody.add(it, Config.params.get(it).toString())
+                }
             formBody.build()
         }
     }
@@ -121,19 +122,17 @@ object HttpService {
      */
     private fun getRequest(builder: Builder): Request.Builder {
         val url = when {
+            !builder.isSendPublicKey -> {
+                Utils.formatGet(configUrl(builder.url), builder.requestBodyBundle)
+            }
             builder.requestBodyBundle.size() > 0 -> {
                 if (Config.params.size() > 0) {
-                    Utils.formatGet(configUrl(builder.url), builder.requestBodyBundle) +
-                            '&' +
-                            Utils.formatParamsGet(Config.params)
+                    Utils.formatGet(configUrl(builder.url), builder.requestBodyBundle) + '&' + Utils.formatParamsGet(Config.params)
                 } else
                     Utils.formatGet(configUrl(builder.url), builder.requestBodyBundle)
             }
             Config.params.size() > 0 -> {
-                Utils.formatGet(
-                    configUrl(builder.url),
-                    Config.params
-                )
+                Utils.formatGet(configUrl(builder.url), Config.params)
             }
             else ->
                 Utils.formatGet(configUrl(builder.url), builder.requestBodyBundle)
@@ -141,7 +140,9 @@ object HttpService {
 
         val request = Request.Builder().url(url).tag(builder.tag)
         builder.header.keySet().forEach { request.addHeader(it, builder.header.get(it).toString()) }
-        Config.header.keySet().forEach { request.addHeader(it, Config.header.get(it).toString()) }
+
+        if (builder.isSendPublicKey)
+            Config.header.keySet().forEach { request.addHeader(it, Config.header.get(it).toString()) }
 
         if (builder.isDownloadBreakpoint && builder.downloadEndIndex != 0L)
             request.addHeader("RANGE", String.format("bytes=%d-%d", builder.downloadStartIndex, builder.downloadEndIndex))
@@ -159,7 +160,8 @@ object HttpService {
                 .tag(builder.tag)
                 .post(getRequestBody(builder))
         builder.header.keySet().forEach { request.addHeader(it, builder.header.get(it).toString()) }
-        Config.header.keySet().forEach { request.addHeader(it, Config.header.get(it).toString()) }
+        if (builder.isSendPublicKey)
+            Config.header.keySet().forEach { request.addHeader(it, Config.header.get(it).toString()) }
         if (builder.isDownloadBreakpoint && builder.downloadEndIndex != 0L)
             request.addHeader("RANGE", String.format("bytes=%d-%d", builder.downloadStartIndex, builder.downloadEndIndex))
         return request
@@ -293,9 +295,11 @@ object HttpService {
         builder.requestBodyBundle.keySet().forEach {
             multipartBody.addFormDataPart(it, builder.requestBodyBundle.get(it).toString())
         }
-        Config.params.keySet().forEach {
-            multipartBody.addFormDataPart(it, Config.params.get(it).toString())
-        }
+
+        if (builder.isSendPublicKey)
+            Config.params.keySet().forEach {
+                multipartBody.addFormDataPart(it, Config.params.get(it).toString())
+            }
 
         builder.fileBundle.keySet().forEach {
             when (val obj = builder.fileBundle.getSerializable(it)) {
@@ -317,7 +321,8 @@ object HttpService {
             .tag(builder.tag)
             .post(multipartBody.build())
         builder.header.keySet().forEach { request.addHeader(it, builder.header.get(it).toString()) }
-        Config.header.keySet().forEach { request.addHeader(it, Config.header.get(it).toString()) }
+        if (builder.isSendPublicKey)
+            Config.header.keySet().forEach { request.addHeader(it, Config.header.get(it).toString()) }
 
         callback.onStart()
         getCall(uploadingClient, request.build(), builder).enqueue(object : Callback {
@@ -526,7 +531,7 @@ object HttpService {
         val requestBodyBundle = Bundle()
         val fileBundle = Bundle()
         val header = Bundle()
-
+        internal var isSendPublicKey = true
         internal var method: String = Config.defaultMethod
         internal var tag: String? = null
         internal var downloadStartIndex = 0L
@@ -557,6 +562,7 @@ object HttpService {
         fun binder(fragment: androidx.fragment.app.Fragment?) =
             also { this.fragment = fragment }
 
+        fun sendPublicKey(isSendPublicKey: Boolean = true) = also { this.isSendPublicKey = isSendPublicKey }
         /**
          * 与activity生命周期绑定，若activity销毁，请求将不会返回
          */
@@ -689,6 +695,7 @@ object HttpService {
          */
         internal var isDebug = false
         internal var isPrintAllJson = false
+
 
         fun printAllJson(isAll: Boolean) = also { this.isPrintAllJson = isAll }
         fun debug(isDebug: Boolean = true) = also { this.isDebug = isDebug }

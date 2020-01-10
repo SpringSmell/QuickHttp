@@ -36,9 +36,9 @@ class MainActivity : AppCompatActivity() {
         HttpService.Config
             .debug()
             .baseUrl("https://www.baseurl.com")/*默认为空*/
-            .addParams("TOKEN", "token")/*公共参数*/
+            .addParams("publicTOKEN", "token")/*公共参数*/
             .method(true)/*默认为GET请求*/
-            .addHeader("key", "value")/*公共头部参数*/
+            .addHeader("publicHeader", "value")/*公共头部参数*/
             .connectTimeout(200000)/*超时时间*/
             .encoding("UTF-8")/*编码*/
             .retryConnection(true)/*连接异常是否重试：默认为true*/
@@ -62,7 +62,8 @@ class MainActivity : AppCompatActivity() {
 //            Utils.printJson(json)
             /*普通请求*/
             HttpService.Builder("http://api.jiruanos.com/api/user/profile")
-                .get()
+                .post()
+                .sendPublicKey(false)
                 .enqueue(object : BaseCallback<BrandListModel.DataBeanX>() {
                     override fun suc(value: BrandListModel.DataBeanX) {
                         Log.e("HttpService", "数量：$value")

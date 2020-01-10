@@ -14,10 +14,8 @@ object JsonUtils {
         val jsonAdapter = moshi.adapter<T>(T::class.java)
         jsonAdapter.fromJson(json)
     } catch (O_O: Exception) {
-        Log.e(
-            "Gson",
-            "json or class error , from  " + T::class.java.simpleName + " error json :" + json
-        )
+        Log.e(JsonUtils::class.java.simpleName, "json or class error , from  " + T::class.java.simpleName + " \nerror json :" + json)
+        O_O.printStackTrace()
         null
     }
 
@@ -41,7 +39,7 @@ object JsonUtils {
         moshi.adapter<T>(type).fromJson(json)
     } catch (ex: Exception) {
         ex.printStackTrace()
-        Log.e("Gson", "json or class error , from  " + cls.simpleName + " error json :" + json)
+        Log.e(JsonUtils::class.java.simpleName, "json or class error , from  " + cls.simpleName + " \nerror json :" + json)
         null
     }
 
@@ -57,7 +55,7 @@ object JsonUtils {
         jsonAdapter.fromJson(json)
     } catch (ex: Exception) {
         ex.printStackTrace()
-        Log.e("Gson", "json or class error , from  " + cls.simpleName + " error json :" + json)
+        Log.e(JsonUtils::class.java.simpleName, "json or class error , from  " + cls.simpleName + " \nerror json :" + json)
         null
     }
 
@@ -75,7 +73,7 @@ object JsonUtils {
             (0 until ja.length()).mapTo(listT) { parseFromJson(ja.getString(it), cls)!! }
         } catch (ex: Exception) {
             ex.printStackTrace()
-            Log.e("Gson", "json or class error , from  " + cls.simpleName + " error json :" + json)
+            Log.e(JsonUtils::class.java.simpleName, "json or class error , from  " + cls.simpleName + " \nerror json :" + json)
         }
 
         return listT
@@ -95,10 +93,7 @@ object JsonUtils {
             (0 until ja.length()).mapTo(listT) { parseFromJson(ja.getString(it), T::class.java)!! }
         } catch (ex: Exception) {
             ex.printStackTrace()
-            Log.e(
-                "Gson",
-                "json or class error , from  " + T::class.java.simpleName + " error json :" + json
-            )
+            Log.e(JsonUtils::class.java.simpleName, "json or class error , from  " + T::class.java.simpleName + " \nerror json :" + json)
         }
 
         return listT
@@ -115,7 +110,7 @@ object JsonUtils {
         jsonAdapter.toJson(obj)
     } catch (ex: Exception) {
         ex.printStackTrace()
-        Log.e("Gson", "class error , from " + obj::class.java.simpleName)
+        Log.e(JsonUtils::class.java.simpleName, "class error , from " + obj::class.java.simpleName)
         ""
     }
 }
