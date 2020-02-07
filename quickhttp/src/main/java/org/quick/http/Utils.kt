@@ -73,8 +73,9 @@ object Utils {
             tempUrl.substring(0, url.length - 1)
         else
             tempUrl
+
         return if (tempUrl.endsWith('?'))
-            tempUrl.substring(0, url.length - 1)
+            tempUrl.substring(0, tempUrl.length - 1)
         else
             tempUrl
     }

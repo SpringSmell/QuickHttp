@@ -526,14 +526,14 @@ object HttpService {
     /**
      * 构造器
      */
-    class Builder(internal val url: String) {
+    class Builder(val url: String) {
 
         val requestBodyBundle = Bundle()
         val fileBundle = Bundle()
         val header = Bundle()
-        internal var isSendPublicKey = true
-        internal var method: String = Config.defaultMethod
-        internal var tag: String? = null
+        var isSendPublicKey = true
+        var method: String = Config.defaultMethod
+        var tag: String? = null
         internal var downloadStartIndex = 0L
         internal var downloadEndIndex = 0L
         internal var isDownloadBreakpoint = true/*是否断点下载*/
@@ -541,8 +541,8 @@ object HttpService {
         internal var downloadFileName: String = ""
         internal var ignoreEqualJson = false/*忽略相同的JSON*/
 
-        internal var fragment: Fragment? = null
-        internal var context: Context? = null
+        var fragment: Fragment? = null
+        var context: Context? = null
 
         fun get() =
             also { this.method = "GET" }
