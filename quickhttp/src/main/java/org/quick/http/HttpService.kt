@@ -171,10 +171,11 @@ object HttpService {
      * 配置URL
      */
     private fun configUrl(postfix: String): String {
-        return if (Utils.isHttpUrlFormRight(postfix))
-            postfix
+
+        return if (Utils.isHttpUrlFormRight(postfix.trim()))
+            postfix.trim()
         else
-            Config.baseUrl + postfix
+            Config.baseUrl + postfix.trim()
     }
 
     /**

@@ -67,7 +67,12 @@ object Utils {
      */
     fun formatGet(url: String, bundle: Bundle?): String {
         val params = formatParamsGet(bundle)
-        var tempUrl = String.format("%s?%s", url, params)
+        var tempUrl =
+            if (url.contains("?")) {
+                "$url&$params"
+            } else {
+                String.format("%s?%s", url, params)
+            }
 
         tempUrl = if (tempUrl.endsWith('&'))
             tempUrl.substring(0, url.length - 1)
@@ -228,7 +233,7 @@ object Utils {
             val newJson = try {
                 val jo = JSONObject(json)
                 jo.toString(4)
-            }catch (O_O:java.lang.Exception){
+            } catch (O_O: java.lang.Exception) {
                 json
             }
             if (HttpService.Config.isPrintAllJson) {

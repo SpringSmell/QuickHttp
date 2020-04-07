@@ -2,10 +2,10 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/QuickHttp.iml" filepath="$PROJECT_DIR$/QuickHttp.iml" />
+      <module fileurl="file://$PROJECT_DIR$/QuickHttp.iml" filepath="$PROJECT_DIR$/QuickHttp.iml" group="QuickHttp" />
       <module fileurl="file://$PROJECT_DIR$/QuickHttpService.iml" filepath="$PROJECT_DIR$/QuickHttpService.iml" />
-      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/quickhttp/quickhttp.iml" filepath="$PROJECT_DIR$/quickhttp/quickhttp.iml" />
+      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" group="QuickHttp/app" />
+      <module fileurl="file://$PROJECT_DIR$/quickhttp/quickhttp.iml" filepath="$PROJECT_DIR$/quickhttp/quickhttp.iml" group="QuickHttp/quickhttp" />
     </modules>
   </component>
 </project>
