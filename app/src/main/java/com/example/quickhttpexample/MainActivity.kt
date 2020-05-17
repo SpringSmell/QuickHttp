@@ -5,14 +5,18 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.example.quickhttpexample.model.BeanJava2
+import com.example.quickhttpexample.model.BeanJavaT
 import com.example.quickhttpexample.model.BrandListModel
 import kotlinx.android.synthetic.main.activity_main.*
 import org.quick.http.HttpService
 import org.quick.http.JsonUtils
 import org.quick.http.Utils
+import org.quick.http.callback.Callback
 import org.quick.http.callback.OnDownloadListener
 import org.quick.http.callback.OnUploadingListener
 import java.io.File
+import javax.net.ssl.TrustManager
 
 
 class MainActivity : AppCompatActivity() {
@@ -23,7 +27,7 @@ class MainActivity : AppCompatActivity() {
             "            \"sex\": true,\n" +
             "            \"mobileNum\": 15102309066\n" +
             "        }"
-
+    var tm = arrayOf<TrustManager>()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -43,13 +47,13 @@ class MainActivity : AppCompatActivity() {
             .encoding("UTF-8")/*编码*/
             .retryConnection(true)/*连接异常是否重试：默认为true*/
             .onRequestBefore {
-                it.addHeader("header2", "header1").addParams("test324", "123213")
+//                it.addHeader("header2", "header1").addParams("test324", "123213")
             }
             .onResponseCallback {
-                Log.e("test", "全局响应 : $it")
+//                Log.e("test", "全局响应 : $it")
             }
             .onFailedCallback { e, isNetError ->
-                Log.e("test", "全局失败")
+//                Log.e("test", "全局失败")
             }
     }
 
@@ -64,12 +68,28 @@ class MainActivity : AppCompatActivity() {
             HttpService.Builder("http://api.jiruanos.com/api/user/profile")
                 .post()
                 .sendPublicKey(false)
-                .enqueue(object : BaseCallback<BrandListModel.DataBeanX>() {
-                    override fun suc(value: BrandListModel.DataBeanX) {
+                .enqueue(object : BaseCallback<BeanJavaT<BeanJava2>>() {
+                    override fun suc(value: BeanJavaT<BeanJava2>) {
                         Log.e("HttpService", "数量：$value")
                     }
 
                     override fun failed(e: Throwable?, isNetworkError: Boolean, parse: Boolean) {
+                    }
+                })
+//            val url="https://www.taobao.com"
+            val url = "https://dscnew.taobao.com/i5/590/780/590782412752/TB1w22QArr1gK0jSZFD8qv9yVla.desc%7Cvar%5Edesc%3Bsign%5E67d207d0fec3308c05fd655d7a8cc6ff%3Blang%5Egbk%3Bt%5E1586180681"
+            HttpService.Builder(url)
+                .post()
+                .sendPublicKey(false)
+                .enqueue(object : Callback<String>() {
+
+
+                    override fun onFailure(e: Throwable, isNetworkError: Boolean) {
+
+                    }
+
+                    override fun onResponse(value: String?) {
+                        Log.e("123213", value)
                     }
                 })
         }

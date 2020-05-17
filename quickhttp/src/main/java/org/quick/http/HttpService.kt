@@ -16,10 +16,16 @@ import org.quick.http.callback.OnWriteListener
 import org.quick.http.interceptor.DownloadInterceptor
 import org.quick.http.interceptor.LoggingInterceptor
 import org.quick.http.interceptor.UploadingInterceptor
+import org.quick.http.ssl.SSLUtils
 import java.io.File
 import java.io.IOException
 import java.net.ConnectException
+import java.security.KeyStore
+import java.util.*
 import java.util.concurrent.TimeUnit
+import javax.net.ssl.*
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 
 /**
  * 网络服务
@@ -29,10 +35,12 @@ import java.util.concurrent.TimeUnit
 object HttpService {
     const val TAG = "HttpService"
     private val taskCalls = HashMap<String, Call>()
+
     /**
      * Cookie管理
      */
     private val localCookieJar = LocalCookieJar()
+
     /**
      * 上一次的JSON
      */
@@ -51,6 +59,20 @@ object HttpService {
     val normalClient by lazy {
         clientBuilder
             .addInterceptor(LoggingInterceptor())
+            .hostnameVerifier(HostnameVerifier { hostname, session -> true })
+            .apply {
+                val trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
+                trustManagerFactory.init(null as KeyStore?)
+                val trustManagers = trustManagerFactory.trustManagers
+                check(!(trustManagers.size != 1 || trustManagers[0] !is X509TrustManager)) {
+                    ("Unexpected default trust managers:" + Arrays.toString(trustManagers))
+                }
+                val trustManager = trustManagers[0] as X509TrustManager
+                val sslContext = SSLContext.getInstance("SSL")
+                sslContext.init(null, arrayOf<TrustManager>(trustManager), null)
+                val sslSocketFactory = sslContext.socketFactory
+                sslSocketFactory(sslSocketFactory, trustManager)
+            }
             .build()
     }
 
@@ -564,6 +586,7 @@ object HttpService {
             also { this.fragment = fragment }
 
         fun sendPublicKey(isSendPublicKey: Boolean = true) = also { this.isSendPublicKey = isSendPublicKey }
+
         /**
          * 与activity生命周期绑定，若activity销毁，请求将不会返回
          */
@@ -674,6 +697,7 @@ object HttpService {
     object Config {
         /*公共Header*/
         val header = Bundle()
+
         /*公共参数*/
         val params = Bundle()
         internal var baseUrl = ""
@@ -682,10 +706,12 @@ object HttpService {
         internal var readTimeout = 30L
         internal var writeTimeout = 30L
         internal var connectTimeout = 30L
+
         /*如果遇到连接问题，是否重试*/
         internal var isRetryConnection = true
         internal var cachePath: String = Utils.saveSDCardPath
         internal var cacheSize = 10 * 1024 * 1024L
+
         /*请求之前回调*/
         internal var onRequestBeforeListener: ((builder: Builder) -> Unit)? = null
         internal var onFailedCallback: ((e: IOException, isNetError: Boolean) -> Unit)? = null

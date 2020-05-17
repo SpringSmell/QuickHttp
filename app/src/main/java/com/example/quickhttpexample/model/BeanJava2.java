@@ -1,4 +1,4 @@
-package com.example.quickhttpexample;
+package com.example.quickhttpexample.model;
 
 public class BeanJava2 {
    public int code;

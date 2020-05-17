@@ -37,7 +37,7 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'androidx.appcompat:appcompat:1.1.0'
-    api 'com.squareup.moshi:moshi:1.8.0'
+    api 'com.squareup.moshi:moshi:1.9.2'
     implementation 'com.squareup.okhttp3:okhttp:4.2.1'
     implementation 'com.github.SpringSmell:QuickAsync:1.0.3'
 }

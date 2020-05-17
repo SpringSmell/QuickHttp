@@ -1,10 +1,11 @@
 package com.example.quickhttpexample
 
 import android.os.Bundle
-import android.os.Handler
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.example.quickhttpexample.model.BeanJava
+import com.example.quickhttpexample.model.BeanKotlin
 import kotlinx.android.synthetic.main.activity_fragment.*
 import org.quick.http.HttpService
 import org.quick.http.callback.Callback
