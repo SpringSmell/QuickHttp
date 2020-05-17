@@ -16,7 +16,6 @@ import org.quick.http.callback.OnWriteListener
 import org.quick.http.interceptor.DownloadInterceptor
 import org.quick.http.interceptor.LoggingInterceptor
 import org.quick.http.interceptor.UploadingInterceptor
-import org.quick.http.ssl.SSLUtils
 import java.io.File
 import java.io.IOException
 import java.net.ConnectException

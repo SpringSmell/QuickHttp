@@ -3,12 +3,13 @@ package org.quick.http
 import android.util.Log
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import org.json.JSONArray
 import java.util.ArrayList
 
 object JsonUtils {
 
-    val moshi: Moshi by lazy { return@lazy Moshi.Builder().build() }
+    val moshi: Moshi by lazy { return@lazy Moshi.Builder().add(KotlinJsonAdapterFactory()).build() }
 
     inline fun <reified T> parseFromJson(json: String?): T? = try {
         val jsonAdapter = moshi.adapter<T>(T::class.java)
